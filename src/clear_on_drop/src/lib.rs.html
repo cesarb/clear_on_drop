@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="Source to the Rust file `src/lib.rs`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang">
+
+    <title>lib.rs.html -- source</title>
+
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content source"><pre class="line-numbers"><span id="1"> 1</span>
+<span id="2"> 2</span>
+<span id="3"> 3</span>
+<span id="4"> 4</span>
+<span id="5"> 5</span>
+<span id="6"> 6</span>
+<span id="7"> 7</span>
+<span id="8"> 8</span>
+<span id="9"> 9</span>
+<span id="10">10</span>
+<span id="11">11</span>
+<span id="12">12</span>
+<span id="13">13</span>
+<span id="14">14</span>
+<span id="15">15</span>
+<span id="16">16</span>
+<span id="17">17</span>
+<span id="18">18</span>
+<span id="19">19</span>
+<span id="20">20</span>
+<span id="21">21</span>
+<span id="22">22</span>
+<span id="23">23</span>
+<span id="24">24</span>
+<span id="25">25</span>
+<span id="26">26</span>
+<span id="27">27</span>
+<span id="28">28</span>
+<span id="29">29</span>
+<span id="30">30</span>
+<span id="31">31</span>
+<span id="32">32</span>
+<span id="33">33</span>
+<span id="34">34</span>
+<span id="35">35</span>
+<span id="36">36</span>
+<span id="37">37</span>
+<span id="38">38</span>
+<span id="39">39</span>
+<span id="40">40</span>
+<span id="41">41</span>
+<span id="42">42</span>
+<span id="43">43</span>
+<span id="44">44</span>
+<span id="45">45</span>
+<span id="46">46</span>
+<span id="47">47</span>
+<span id="48">48</span>
+<span id="49">49</span>
+<span id="50">50</span>
+<span id="51">51</span>
+<span id="52">52</span>
+<span id="53">53</span>
+<span id="54">54</span>
+<span id="55">55</span>
+<span id="56">56</span>
+<span id="57">57</span>
+<span id="58">58</span>
+<span id="59">59</span>
+<span id="60">60</span>
+<span id="61">61</span>
+<span id="62">62</span>
+</pre><pre class='rust '>
+<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>cfg_attr</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;nightly&quot;</span>, <span class='ident'>feature</span>(<span class='ident'>asm</span>))]</span>
+<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>deny</span>(<span class='ident'>missing_docs</span>)]</span>
+
+<span class='doccomment'>//! Helpers for clearing sensitive data on the stack and heap.</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//! Some kinds of data should not be kept in memory any longer than</span>
+<span class='doccomment'>//! they are needed. For instance, cryptographic keys and intermediate</span>
+<span class='doccomment'>//! values should be erased as soon as they are no longer needed.</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//! The Rust language helps prevent the accidental reading of leftover</span>
+<span class='doccomment'>//! values on the stack or the heap; however, means outside the program</span>
+<span class='doccomment'>//! (for instance a debugger, or even physical access to the hardware)</span>
+<span class='doccomment'>//! can still read the leftover values. For long-lived processes, key</span>
+<span class='doccomment'>//! material might be found in the memory long after it should have been</span>
+<span class='doccomment'>//! discarded.</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//! This crate provides two mechanisms to help minimize leftover data.</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//! The `ClearOnDrop` wrapper holds a mutable reference to sensitive</span>
+<span class='doccomment'>//! data (for instance, a cipher state), and clears the data when</span>
+<span class='doccomment'>//! dropped. While the mutable reference is held, the data cannot be</span>
+<span class='doccomment'>//! moved, so there won&#39;t be leftovers due to moves; the wrapper itself</span>
+<span class='doccomment'>//! can be freely moved. Alternatively, it can hold data on the heap</span>
+<span class='doccomment'>//! (using a `Box&lt;T&gt;`, or possibly a similar which allocates from a</span>
+<span class='doccomment'>//! `mlock`ed heap).</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//! The `clear_stack_on_return` function calls a closure, and after it</span>
+<span class='doccomment'>//! returns, overwrites several kilobytes of the stack. This can help</span>
+<span class='doccomment'>//! overwrite temporary variables used by cryptographic algorithms, and</span>
+<span class='doccomment'>//! is especially relevant when running on a short-lived thread, since</span>
+<span class='doccomment'>//! the memory used for the thread stack cannot be easily overwritten</span>
+<span class='doccomment'>//! after the thread terminates.</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//! # Preventing compiler optimizations</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//! If the compiler determines the data is not used after being cleared,</span>
+<span class='doccomment'>//! it could elide the clearing code. Aditionally, the compiler could</span>
+<span class='doccomment'>//! inline a called function and the stack clearing code, using separate</span>
+<span class='doccomment'>//! areas of the stack for each. This crate has three mechanisms which</span>
+<span class='doccomment'>//! prevent these unwanted optimizations, selected at compile time via</span>
+<span class='doccomment'>//! cargo features.</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//! The fastest mechanism uses inline assembly, which is only available</span>
+<span class='doccomment'>//! on nightly Rust. It is enabled through the `nightly` feature, and</span>
+<span class='doccomment'>//! does not need a working C compiler.</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//! The second mechanism, which is the default, uses a call to a dummy</span>
+<span class='doccomment'>//! C function. It works on stable Rust, but needs a working C compiler.</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//! The third mechanism is a fallback, which attempts to confuse the</span>
+<span class='doccomment'>//! optimizer through the use of atomic instructions. It should not be</span>
+<span class='doccomment'>//! used unless necessary, since it&#39;s less reliable. It is enabled by</span>
+<span class='doccomment'>//! the `no_cc` feature, works on stable Rust, and does not need a C</span>
+<span class='doccomment'>//! compiler.</span>
+
+<span class='kw'>mod</span> <span class='ident'>clear_on_drop</span>;
+<span class='kw'>mod</span> <span class='ident'>clear_stack_on_return</span>;
+<span class='kw'>mod</span> <span class='ident'>fnoption</span>;
+<span class='kw'>mod</span> <span class='ident'>hide</span>;
+
+<span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>clear_on_drop</span>::<span class='op'>*</span>;
+<span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>clear_stack_on_return</span>::<span class='op'>*</span>;
+</pre>
+</section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../../";
+        window.currentCrate = "clear_on_drop";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../../../jquery.js"></script>
+    <script src="../../../main.js"></script>
+    
+    <script defer src="../../../search-index.js"></script>
+</body>
+</html>

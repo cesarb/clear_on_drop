@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `clear_on_drop` crate.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, clear_on_drop">
+
+    <title>clear_on_drop - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'></p><script>window.sidebarCurrent = {name: 'clear_on_drop', ty: 'mod', relpath: '../'};</script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content mod">
+<h1 class='fqn'><span class='in-band'>Crate <a class='mod' href=''>clear_on_drop</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-0' class='srclink' href='../src/clear_on_drop/src/lib.rs.html#1-62' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'><p>Helpers for clearing sensitive data on the stack and heap.</p>
+
+<p>Some kinds of data should not be kept in memory any longer than
+they are needed. For instance, cryptographic keys and intermediate
+values should be erased as soon as they are no longer needed.</p>
+
+<p>The Rust language helps prevent the accidental reading of leftover
+values on the stack or the heap; however, means outside the program
+(for instance a debugger, or even physical access to the hardware)
+can still read the leftover values. For long-lived processes, key
+material might be found in the memory long after it should have been
+discarded.</p>
+
+<p>This crate provides two mechanisms to help minimize leftover data.</p>
+
+<p>The <code>ClearOnDrop</code> wrapper holds a mutable reference to sensitive
+data (for instance, a cipher state), and clears the data when
+dropped. While the mutable reference is held, the data cannot be
+moved, so there won&#39;t be leftovers due to moves; the wrapper itself
+can be freely moved. Alternatively, it can hold data on the heap
+(using a <code>Box&lt;T&gt;</code>, or possibly a similar which allocates from a
+<code>mlock</code>ed heap).</p>
+
+<p>The <code>clear_stack_on_return</code> function calls a closure, and after it
+returns, overwrites several kilobytes of the stack. This can help
+overwrite temporary variables used by cryptographic algorithms, and
+is especially relevant when running on a short-lived thread, since
+the memory used for the thread stack cannot be easily overwritten
+after the thread terminates.</p>
+
+<h1 id='preventing-compiler-optimizations' class='section-header'><a href='#preventing-compiler-optimizations'>Preventing compiler optimizations</a></h1>
+<p>If the compiler determines the data is not used after being cleared,
+it could elide the clearing code. Aditionally, the compiler could
+inline a called function and the stack clearing code, using separate
+areas of the stack for each. This crate has three mechanisms which
+prevent these unwanted optimizations, selected at compile time via
+cargo features.</p>
+
+<p>The fastest mechanism uses inline assembly, which is only available
+on nightly Rust. It is enabled through the <code>nightly</code> feature, and
+does not need a working C compiler.</p>
+
+<p>The second mechanism, which is the default, uses a call to a dummy
+C function. It works on stable Rust, but needs a working C compiler.</p>
+
+<p>The third mechanism is a fallback, which attempts to confuse the
+optimizer through the use of atomic instructions. It should not be
+used unless necessary, since it&#39;s less reliable. It is enabled by
+the <code>no_cc</code> feature, works on stable Rust, and does not need a C
+compiler.</p>
+</div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.ClearOnDrop.html'
+                                  title='clear_on_drop::ClearOnDrop'>ClearOnDrop</a></td>
+                           <td class='docblock-short'>
+                                <p>Zeroizes a storage location when dropped.</p>
+                           </td>
+                       </tr></table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.clear_stack.html'
+                                  title='clear_on_drop::clear_stack'>clear_stack</a></td>
+                           <td class='docblock-short'>
+                                <p>Overwrites a few pages of stack.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.clear_stack_on_return.html'
+                                  title='clear_on_drop::clear_stack_on_return'>clear_stack_on_return</a></td>
+                           <td class='docblock-short'>
+                                <p>Calls a closure and overwrites its stack on return.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.clear_stack_on_return_fnonce.html'
+                                  title='clear_on_drop::clear_stack_on_return_fnonce'>clear_stack_on_return_fnonce</a></td>
+                           <td class='docblock-short'>
+                                <p>Calls a closure and overwrites its stack on return.</p>
+                           </td>
+                       </tr></table></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "clear_on_drop";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    
+    <script defer src="../search-index.js"></script>
+</body>
+</html>
