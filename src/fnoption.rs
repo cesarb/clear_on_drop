@@ -12,7 +12,7 @@ pub struct FnOption<R, F: FnOnce() -> R> {
     f: Option<F>,
 }
 
-impl<R, F: FnOnce() -> R> FnOption<R, F> {
+impl<R, F> FnOption<R, F> where F: FnOnce() -> R {
     /// Wraps a `FnOnce` with an `Option`.
     #[inline]
     pub fn new(f: F) -> Self {
