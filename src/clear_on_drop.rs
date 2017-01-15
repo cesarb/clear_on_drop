@@ -29,12 +29,16 @@ use hide::hide_mem;
 /// ```
 
 pub struct ClearOnDrop<T, P>
-  where T: Default, P: Deref<Target = T> + DerefMut {
+    where T: Default,
+          P: Deref<Target = T> + DerefMut
+{
     _place: P,
 }
 
 impl<T, P> ClearOnDrop<T, P>
-  where T: Default, P: Deref<Target = T> + DerefMut {
+    where T: Default,
+          P: Deref<Target = T> + DerefMut
+{
     /// Creates a new `ClearOnDrop` which clears `place` on drop.
     ///
     /// The `place` parameter can be a `&mut T`, a `Box<T>`, or other
@@ -45,16 +49,20 @@ impl<T, P> ClearOnDrop<T, P>
     }
 }
 
-impl<T, P> fmt::Debug for ClearOnDrop<T, P> 
-  where T: Default, P: Deref<Target = T> + DerefMut + fmt::Debug {
+impl<T, P> fmt::Debug for ClearOnDrop<T, P>
+    where T: Default,
+          P: Deref<Target = T> + DerefMut + fmt::Debug
+{
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::Debug::fmt(&self._place, f)
     }
 }
 
-impl<T, P> Deref for ClearOnDrop<T, P> 
-  where T: Default, P: Deref<Target = T> + DerefMut {
+impl<T, P> Deref for ClearOnDrop<T, P>
+    where T: Default,
+          P: Deref<Target = T> + DerefMut
+{
     type Target = T;
 
     #[inline]
@@ -63,8 +71,10 @@ impl<T, P> Deref for ClearOnDrop<T, P>
     }
 }
 
-impl<T, P> DerefMut for ClearOnDrop<T, P> 
-  where T: Default, P: Deref<Target = T> + DerefMut {
+impl<T, P> DerefMut for ClearOnDrop<T, P>
+    where T: Default,
+          P: Deref<Target = T> + DerefMut
+{
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
         DerefMut::deref_mut(&mut self._place)
@@ -72,7 +82,9 @@ impl<T, P> DerefMut for ClearOnDrop<T, P>
 }
 
 impl<T, P> Drop for ClearOnDrop<T, P>
-  where T: Default, P: Deref<Target = T> + DerefMut {
+    where T: Default,
+          P: Deref<Target = T> + DerefMut
+{
     #[inline]
     fn drop(&mut self) {
         let place = self.deref_mut();
