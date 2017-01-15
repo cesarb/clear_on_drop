@@ -27,11 +27,18 @@ use hide::hide_mem;
 /// }   // key is dropped here
 /// assert_eq!(place.value, 0);
 /// ```
-pub struct ClearOnDrop<T: Default, P: Deref<Target = T> + DerefMut> {
+
+pub struct ClearOnDrop<T, P>
+    where T: Default,
+          P: Deref<Target = T> + DerefMut
+{
     _place: P,
 }
 
-impl<T: Default, P: Deref<Target = T> + DerefMut> ClearOnDrop<T, P> {
+impl<T, P> ClearOnDrop<T, P>
+    where T: Default,
+          P: Deref<Target = T> + DerefMut
+{
     /// Creates a new `ClearOnDrop` which clears `place` on drop.
     ///
     /// The `place` parameter can be a `&mut T`, a `Box<T>`, or other
@@ -42,14 +49,20 @@ impl<T: Default, P: Deref<Target = T> + DerefMut> ClearOnDrop<T, P> {
     }
 }
 
-impl<T: Default, P: Deref<Target = T> + DerefMut + fmt::Debug> fmt::Debug for ClearOnDrop<T, P> {
+impl<T, P> fmt::Debug for ClearOnDrop<T, P>
+    where T: Default,
+          P: Deref<Target = T> + DerefMut + fmt::Debug
+{
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::Debug::fmt(&self._place, f)
     }
 }
 
-impl<T: Default, P: Deref<Target = T> + DerefMut> Deref for ClearOnDrop<T, P> {
+impl<T, P> Deref for ClearOnDrop<T, P>
+    where T: Default,
+          P: Deref<Target = T> + DerefMut
+{
     type Target = T;
 
     #[inline]
@@ -58,14 +71,20 @@ impl<T: Default, P: Deref<Target = T> + DerefMut> Deref for ClearOnDrop<T, P> {
     }
 }
 
-impl<T: Default, P: Deref<Target = T> + DerefMut> DerefMut for ClearOnDrop<T, P> {
+impl<T, P> DerefMut for ClearOnDrop<T, P>
+    where T: Default,
+          P: Deref<Target = T> + DerefMut
+{
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
         DerefMut::deref_mut(&mut self._place)
     }
 }
 
-impl<T: Default, P: Deref<Target = T> + DerefMut> Drop for ClearOnDrop<T, P> {
+impl<T, P> Drop for ClearOnDrop<T, P>
+    where T: Default,
+          P: Deref<Target = T> + DerefMut
+{
     #[inline]
     fn drop(&mut self) {
         let place = self.deref_mut();
