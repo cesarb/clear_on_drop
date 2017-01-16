@@ -1,5 +1,6 @@
 use std::fmt;
 use std::ops::{Deref, DerefMut};
+use std::borrow::{Borrow, BorrowMut};
 
 use hide::hide_mem;
 use clearable::Clearable;
@@ -125,6 +126,26 @@ impl<T, P> AsMut<T> for ClearOnDrop<T, P>
     #[inline]
     fn as_mut(&mut self) -> &mut T {
         AsMut::as_mut(&mut self._place)
+    }
+}
+
+impl<T, P> Borrow<T> for ClearOnDrop<T, P>
+    where T: Clearable + ?Sized,
+          P: Deref<Target = T> + DerefMut + Borrow<T> 
+{
+    #[inline]
+    fn borrow(&self) -> &T {
+        Borrow::borrow(&self._place)
+    }
+}
+
+impl<T, P> BorrowMut<T> for ClearOnDrop<T, P>
+    where T: Clearable + ?Sized,
+          P: Deref<Target = T> + DerefMut + BorrowMut<T>
+{
+    #[inline]
+    fn borrow_mut(&mut self) -> &mut T {
+        BorrowMut::borrow_mut(&mut self._place)
     }
 }
 
