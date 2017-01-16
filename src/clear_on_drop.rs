@@ -32,7 +32,6 @@ use clearable::Clearable;
 /// # Unsized Example
 ///
 /// ```
-/// use std::ops::Deref;
 /// # use clear_on_drop::ClearOnDrop;
 /// let mut key: ClearOnDrop<[u16], Vec<u16>> = ClearOnDrop::new(vec![1,2,3,4,5,6,7]);
 /// # key[5] = 3;
@@ -62,6 +61,18 @@ impl<T, P> ClearOnDrop<T, P>
     #[inline]
     pub fn new(place: P) -> Self {
         ClearOnDrop { _place: place }
+    }
+}
+
+impl<T, P> Drop for ClearOnDrop<T, P>
+    where T: Clearable + ?Sized,
+          P: Deref<Target = T> + DerefMut
+{
+    #[inline]
+    fn drop(&mut self) {
+        let place = self.deref_mut();
+        unsafe { place.clear(); }
+        hide_mem::<T>(place);
     }
 }
 
@@ -97,17 +108,26 @@ impl<T, P> DerefMut for ClearOnDrop<T, P>
     }
 }
 
-impl<T, P> Drop for ClearOnDrop<T, P>
+impl<T, P> AsRef<T> for ClearOnDrop<T, P>
     where T: Clearable + ?Sized,
-          P: Deref<Target = T> + DerefMut
+          P: Deref<Target = T> + DerefMut + AsRef<T>
 {
     #[inline]
-    fn drop(&mut self) {
-        let place = self.deref_mut();
-        unsafe { place.clear(); }
-        hide_mem::<T>(place);
+    fn as_ref(&self) -> &T {
+        AsRef::as_ref(&self._place)
     }
 }
+
+impl<T, P> AsMut<T> for ClearOnDrop<T, P>
+    where T: Clearable + ?Sized,
+          P: Deref<Target = T> + DerefMut + AsMut<T>
+{
+    #[inline]
+    fn as_mut(&mut self) -> &mut T {
+        AsMut::as_mut(&mut self._place)
+    }
+}
+
 
 #[cfg(test)]
 mod tests {
