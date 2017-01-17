@@ -1,4 +1,5 @@
 use std::fmt;
+use std::hash::{Hash,Hasher};
 use std::ops::{Deref, DerefMut};
 use std::borrow::{Borrow, BorrowMut};
 
@@ -77,15 +78,8 @@ impl<T, P> Drop for ClearOnDrop<T, P>
     }
 }
 
-impl<T, P> fmt::Debug for ClearOnDrop<T, P>
-    where T: Clearable + ?Sized,
-          P: Deref<Target = T> + DerefMut + fmt::Debug
-{
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt::Debug::fmt(&self._place, f)
-    }
-}
+
+// --- Implement pointer traits --- //
 
 impl<T, P> Deref for ClearOnDrop<T, P>
     where T: Clearable + ?Sized,
@@ -150,6 +144,29 @@ impl<T, P> BorrowMut<T> for ClearOnDrop<T, P>
 }
 
 
+// --- Delegate derivable traits --- //
+
+/// Delegate `Debug` to the actual container.
+impl<T, P> fmt::Debug for ClearOnDrop<T, P>
+    where T: Clearable + ?Sized,
+          P: Deref<Target = T> + DerefMut + fmt::Debug
+{
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Debug::fmt(&self._place, f)
+    }
+}
+
+/// Delegate `Hash` to the actual container.  We could delegate directly
+/// through `deref` if desired, but doing so should not change anything.
+impl<T, P> Hash for ClearOnDrop<T, P>
+    where T: Clearable + ?Sized,
+          P: Deref<Target = T> + DerefMut + Hash
+{
+    fn hash<H: Hasher>(&self, state: &mut H) {  self._place.hash(state);  }
+}
+
+
 #[cfg(test)]
 mod tests {
     use super::ClearOnDrop;
@@ -183,3 +200,4 @@ mod tests {
         assert_eq!(clear.data, DATA);
     }
 }
+
