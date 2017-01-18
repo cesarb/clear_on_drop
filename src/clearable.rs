@@ -1,16 +1,21 @@
+
+use hide::hide_mem;
+
 /// Types that can safely be dropped after first being overwritten by zeros.
 ///
 /// There is a default implementation for all `Copy` types and all unsized
-/// arrays of `Clerable` types.  You need to implement `Clerable` yourself
-/// for unsized structs, or if your type could be `Copy` but you do not
-/// want it to be.
+/// arrays `[T]` where `T: Clerable`.  You need to implement `Clerable`
+/// yourself for unsized structs, or if your type could be `Copy` but you
+/// do not want it to be, but do so by calling `Clerable::clear` on their
+/// component `Copy` types and arrays.
 ///
 /// ```
+/// # type SomeCopyType = [u8; 128];
 /// # use clear_on_drop::Clearable;
-/// struct MyNonCopyType([u8; 128]);
+/// struct MyNonCopyType(SomeCopyType);
 /// unsafe impl Clearable for MyNonCopyType {
 ///     unsafe fn clear(&mut self) {
-///         *self = ::std::mem::zeroed::<MyNonCopyType>();
+///         self.0.clear();
 ///     }
 /// }
 /// ```
@@ -28,6 +33,7 @@ pub unsafe trait Clearable {
 }
 
 unsafe impl<T> Clearable for T where T: Copy {
+    #[inline(always)]
     unsafe fn clear(&mut self) {
         *self = ::std::mem::zeroed::<Self>();
         // Assigning like this is equivelent to 
@@ -35,13 +41,15 @@ unsafe impl<T> Clearable for T where T: Copy {
         //   ::std::ptr::write_unaligned::<T>(self, ::std::mem::zeroed::<Self>())
         // because the safety notes on ptr::read say it drops the value
         // previously at *self.
+        hide_mem::<T>(self);
     }
 }
 
 unsafe impl<T> Clearable for [T] where T: Clearable {
+    #[inline(always)]
     unsafe fn clear(&mut self) {
         for s in self.iter_mut() {
-            *s = ::std::mem::zeroed::<T>();
+            Clearable::clear(s);
         }
     }
 }

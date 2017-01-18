@@ -3,7 +3,6 @@ use std::hash::{Hash,Hasher};
 use std::ops::{Deref, DerefMut};
 use std::borrow::{Borrow, BorrowMut};
 
-use hide::hide_mem;
 use clearable::Clearable;
 
 /// Zeroizes a storage location when dropped.
@@ -74,7 +73,6 @@ impl<T, P> Drop for ClearOnDrop<T, P>
     fn drop(&mut self) {
         let place = self.deref_mut();
         unsafe { place.clear(); }
-        hide_mem::<T>(place);
     }
 }
 
