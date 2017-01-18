@@ -10,7 +10,7 @@
 /// Make the optimizer believe the memory pointed to by `ptr` is read
 /// and modified arbitrarily.
 #[inline]
-pub fn hide_mem<T>(ptr: &mut T) {
+pub fn hide_mem<T>(ptr: &mut T) where T: ?Sized {
     hide_mem_impl(ptr);
 }
 
@@ -35,7 +35,7 @@ use self::fallback::*;
 #[cfg(feature = "nightly")]
 mod nightly {
     #[inline]
-    pub fn hide_mem_impl<T>(ptr: *mut T) {
+    pub fn hide_mem_impl<T>(ptr: *mut T) where T: ?Sized {
         unsafe {
             asm!("" : "=*m" (ptr) : "*0" (ptr));
         }
@@ -52,7 +52,7 @@ mod cc {
     }
 
     #[inline]
-    pub fn hide_mem_impl<T>(ptr: *mut T) {
+    pub fn hide_mem_impl<T>(ptr: *mut T) where T: ?Sized {
         unsafe {
             clear_on_drop_hide(ptr as *mut c_void);
         }
@@ -66,7 +66,7 @@ mod fallback {
     use std::sync::atomic::{ATOMIC_USIZE_INIT, AtomicUsize, Ordering};
 
     #[inline]
-    pub fn hide_mem_impl<T>(ptr: *mut T) {
+    pub fn hide_mem_impl<T>(ptr: *mut T) where T: ?Sized {
         static DUMMY: AtomicUsize = ATOMIC_USIZE_INIT;
         DUMMY.store(ptr as usize, Ordering::Release);
     }
@@ -94,5 +94,12 @@ mod tests {
         let after = super::hide_ptr(&mut place);
         assert_eq!(before, after as *mut _);
         assert_eq!(after.data, DATA);
+    }
+
+    #[test]
+    fn hide_unsized() {
+        let mut place = vec![1u64,2u64];
+        super::hide_mem::<[u64]>(place.as_mut_slice());
+        assert_eq!(place.as_slice(), &[1,2]);
     }
 }
