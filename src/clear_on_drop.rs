@@ -155,6 +155,7 @@ impl<P, T: ?Sized> Borrow<T> for ClearOnDrop<P>
           P::Target: Clear,
           T: Clear
 {
+    #[inline]
     fn borrow(&self) -> &T {
         Borrow::borrow(&self._place)
     }
@@ -165,6 +166,7 @@ impl<P, T: ?Sized> BorrowMut<T> for ClearOnDrop<P>
           P::Target: Clear,
           T: Clear
 {
+    #[inline]
     fn borrow_mut(&mut self) -> &mut T {
         BorrowMut::borrow_mut(&mut self._place)
     }
