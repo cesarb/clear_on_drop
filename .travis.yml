@@ -1,0 +1,19 @@
+language: rust
+rust:
+  - stable
+  - beta
+  - nightly
+env:
+  - FEATURES=
+  - FEATURES=--features=no_cc
+  - FEATURES=--features=nightly
+matrix:
+  exclude:
+  - rust: stable
+    env: FEATURES=--features=nightly
+  - rust: beta
+    env: FEATURES=--features=nightly
+script:
+  - cargo build --verbose $FEATURES
+  - cargo test --verbose $FEATURES
+  - [ "$TRAVIS_RUST_VERSION" != "nightly" ] || cargo bench --verbose $FEATURES
