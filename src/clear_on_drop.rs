@@ -22,7 +22,7 @@ use clear::Clear;
 /// let mut place = MyData { value: 0 };
 /// {
 ///     let mut key = ClearOnDrop::new(&mut place);
-///     key.value = 0x012345678;
+///     key.value = 0x01234567;
 ///     // ...
 /// }   // key is dropped here
 /// assert_eq!(place.value, 0);
@@ -118,5 +118,24 @@ mod tests {
         let mut clear = ClearOnDrop::new(place);
         clear.data = DATA;
         assert_eq!(clear.data, DATA);
+    }
+
+    #[test]
+    fn on_slice() {
+        let mut place: [u32; 4] = Default::default();
+        {
+            let mut clear = ClearOnDrop::new(&mut place[..]);
+            clear.copy_from_slice(&DATA);
+            assert_eq!(&clear[..], DATA);
+        }
+        assert_eq!(place, [0, 0, 0, 0]);
+    }
+
+    #[test]
+    fn on_boxed_slice() {
+        let place: Box<[u32]> = vec![0; 4].into_boxed_slice();
+        let mut clear = ClearOnDrop::new(place);
+        clear.copy_from_slice(&DATA);
+        assert_eq!(&clear[..], DATA);
     }
 }

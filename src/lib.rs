@@ -1,4 +1,6 @@
 #![cfg_attr(feature = "nightly", feature(asm))]
+#![cfg_attr(feature = "nightly", feature(i128_type))]
+#![cfg_attr(feature = "nightly", feature(specialization))]
 #![deny(missing_docs)]
 
 //! Helpers for clearing sensitive data on the stack and heap.
@@ -53,12 +55,11 @@
 //! the `no_cc` feature, works on stable Rust, and does not need a C
 //! compiler.
 
-mod clear;
+pub mod clear;
 mod clear_on_drop;
 mod clear_stack_on_return;
 mod fnoption;
 mod hide;
 
-pub use clear::*;
 pub use clear_on_drop::*;
 pub use clear_stack_on_return::*;

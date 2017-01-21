@@ -10,7 +10,7 @@
 /// Make the optimizer believe the memory pointed to by `ptr` is read
 /// and modified arbitrarily.
 #[inline]
-pub fn hide_mem<T>(ptr: &mut T) {
+pub fn hide_mem<T: ?Sized>(ptr: &mut T) {
     hide_mem_impl(ptr);
 }
 
@@ -23,22 +23,42 @@ pub fn hide_ptr<P>(mut ptr: P) -> P {
 }
 
 #[cfg(feature = "nightly")]
-use self::nightly::*;
+pub use self::nightly::*;
 
 #[cfg(not(feature = "no_cc"))]
-use self::cc::*;
+pub use self::cc::*;
 
 #[cfg(all(feature = "no_cc", not(feature = "nightly")))]
-use self::fallback::*;
+pub use self::fallback::*;
 
 // On nightly, inline assembly can be used.
 #[cfg(feature = "nightly")]
 mod nightly {
-    #[inline]
-    pub fn hide_mem_impl<T>(ptr: *mut T) {
-        unsafe {
-            asm!("" : "=*m" (ptr) : "*0" (ptr));
+    trait HideMemImpl {
+        fn hide_mem_impl(ptr: *mut Self);
+    }
+
+    impl<T: ?Sized> HideMemImpl for T {
+        #[inline]
+        default fn hide_mem_impl(ptr: *mut Self) {
+            unsafe {
+                asm!("" : : "r" (ptr as *mut u8) : "memory");
+            }
         }
+    }
+
+    impl<T: Sized> HideMemImpl for T {
+        #[inline]
+        fn hide_mem_impl(ptr: *mut Self) {
+            unsafe {
+                asm!("" : "=*m" (ptr) : "*0" (ptr));
+            }
+        }
+    }
+
+    #[inline]
+    pub fn hide_mem_impl<T: ?Sized>(ptr: *mut T) {
+        HideMemImpl::hide_mem_impl(ptr)
     }
 }
 
@@ -52,7 +72,7 @@ mod cc {
     }
 
     #[inline]
-    pub fn hide_mem_impl<T>(ptr: *mut T) {
+    pub fn hide_mem_impl<T: ?Sized>(ptr: *mut T) {
         unsafe {
             clear_on_drop_hide(ptr as *mut c_void);
         }
@@ -66,9 +86,9 @@ mod fallback {
     use std::sync::atomic::{ATOMIC_USIZE_INIT, AtomicUsize, Ordering};
 
     #[inline]
-    pub fn hide_mem_impl<T>(ptr: *mut T) {
+    pub fn hide_mem_impl<T: ?Sized>(ptr: *mut T) {
         static DUMMY: AtomicUsize = ATOMIC_USIZE_INIT;
-        DUMMY.store(ptr as usize, Ordering::Release);
+        DUMMY.store(ptr as *mut u8 as usize, Ordering::Release);
     }
 }
 
