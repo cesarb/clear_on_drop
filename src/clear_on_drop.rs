@@ -120,6 +120,26 @@ impl<P> Drop for ClearOnDrop<P>
     }
 }
 
+impl<T, P> AsRef<T> for ClearOnDrop<P>
+    where P: DerefMut + AsRef<T>,
+          P::Target: Clear
+{
+    #[inline]
+    fn as_ref(&self) -> &T {
+        AsRef::as_ref(&self._place)
+    }
+}
+
+impl<T, P> AsMut<T> for ClearOnDrop<P>
+    where P: DerefMut + AsMut<T>,
+          P::Target: Clear
+{
+    #[inline]
+    fn as_mut(&mut self) -> &mut T {
+        AsMut::as_mut(&mut self._place)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::ClearOnDrop;
