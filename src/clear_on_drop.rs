@@ -3,6 +3,9 @@ use std::ops::{Deref, DerefMut};
 
 use clear::Clear;
 
+use std::mem;
+use std::ptr;
+
 /// Zeroizes a storage location when dropped.
 ///
 /// This struct contains a reference to a memory location, either as a
@@ -46,6 +49,33 @@ impl<P> ClearOnDrop<P>
     pub fn new(place: P) -> Self {
         ClearOnDrop { _place: place }
     }
+
+    /// Consumes the `ClearOnDrop`, returning the `place` without clearing.
+    ///
+    /// Note: this is an associated function, which means that you have
+    /// to call it as `ClearOnDrop::into_uncleared_place(c)` instead of
+    /// `c.into_uncleared_place()`. This is so that there is no conflict
+    /// with a method on the inner type.
+    #[inline]
+    pub fn into_uncleared_place(c: Self) -> P {
+        unsafe {
+            let place = ptr::read(&c._place);
+            mem::forget(c);
+            place
+        }
+    }
+
+    /// Consumes the `ClearOnDrop`, returning the `place` after clearing.
+    ///
+    /// Note: this is an associated function, which means that you have
+    /// to call it as `ClearOnDrop::into_place(c)` instead of
+    /// `c.into_place()`. This is so that there is no conflict with a
+    /// method on the inner type.
+    #[inline]
+    pub fn into_place(mut c: Self) -> P {
+        c.clear();
+        Self::into_uncleared_place(c)
+    }
 }
 
 impl<P> fmt::Debug for ClearOnDrop<P>
@@ -86,7 +116,7 @@ impl<P> Drop for ClearOnDrop<P>
 {
     #[inline]
     fn drop(&mut self) {
-        Clear::clear(&mut *self._place);
+        self.clear();
     }
 }
 
@@ -109,7 +139,7 @@ mod tests {
             clear.data = DATA;
             assert_eq!(clear.data, DATA);
         }
-        assert_eq!(place.data, [0, 0, 0, 0]);
+        assert_eq!(place.data, [0; 4]);
     }
 
     #[test]
@@ -121,6 +151,28 @@ mod tests {
     }
 
     #[test]
+    fn into_box() {
+        let place: Box<Place> = Box::new(Default::default());
+        let mut clear = ClearOnDrop::new(place);
+        clear.data = DATA;
+        assert_eq!(clear.data, DATA);
+
+        let place = ClearOnDrop::into_place(clear);
+        assert_eq!(place.data, [0; 4]);
+    }
+
+    #[test]
+    fn into_uncleared_box() {
+        let place: Box<Place> = Box::new(Default::default());
+        let mut clear = ClearOnDrop::new(place);
+        clear.data = DATA;
+        assert_eq!(clear.data, DATA);
+
+        let place = ClearOnDrop::into_uncleared_place(clear);
+        assert_eq!(place.data, DATA);
+    }
+
+    #[test]
     fn on_slice() {
         let mut place: [u32; 4] = Default::default();
         {
@@ -128,7 +180,7 @@ mod tests {
             clear.copy_from_slice(&DATA);
             assert_eq!(&clear[..], DATA);
         }
-        assert_eq!(place, [0, 0, 0, 0]);
+        assert_eq!(place, [0; 4]);
     }
 
     #[test]
