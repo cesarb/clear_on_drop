@@ -61,8 +61,8 @@ impl<T: ?Sized> Clear for T
     fn clear(&mut self) {
         let size = mem::size_of_val(self);
         unsafe {
-            ptr::drop_in_place(self);
             let ptr = self as *mut Self;
+            ptr::drop_in_place(ptr);
             ptr::write_bytes(ptr as *mut u8, 0, size);
             hide_mem_impl::<Self>(ptr);
             Self::initialize(ptr);
