@@ -1,7 +1,7 @@
 use std::fmt;
 use std::ops::{Deref, DerefMut};
 
-use hide::hide_mem;
+use clear::Clear;
 
 /// Zeroizes a storage location when dropped.
 ///
@@ -29,14 +29,14 @@ use hide::hide_mem;
 /// ```
 pub struct ClearOnDrop<P>
     where P: DerefMut,
-          P::Target: Default
+          P::Target: Clear
 {
     _place: P,
 }
 
 impl<P> ClearOnDrop<P>
     where P: DerefMut,
-          P::Target: Default
+          P::Target: Clear
 {
     /// Creates a new `ClearOnDrop` which clears `place` on drop.
     ///
@@ -50,7 +50,7 @@ impl<P> ClearOnDrop<P>
 
 impl<P> fmt::Debug for ClearOnDrop<P>
     where P: DerefMut + fmt::Debug,
-          P::Target: Default
+          P::Target: Clear
 {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -60,7 +60,7 @@ impl<P> fmt::Debug for ClearOnDrop<P>
 
 impl<P> Deref for ClearOnDrop<P>
     where P: DerefMut,
-          P::Target: Default
+          P::Target: Clear
 {
     type Target = P::Target;
 
@@ -72,7 +72,7 @@ impl<P> Deref for ClearOnDrop<P>
 
 impl<P> DerefMut for ClearOnDrop<P>
     where P: DerefMut,
-          P::Target: Default
+          P::Target: Clear
 {
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
@@ -82,13 +82,11 @@ impl<P> DerefMut for ClearOnDrop<P>
 
 impl<P> Drop for ClearOnDrop<P>
     where P: DerefMut,
-          P::Target: Default
+          P::Target: Clear
 {
     #[inline]
     fn drop(&mut self) {
-        let place = self.deref_mut();
-        *place = Default::default();
-        hide_mem::<P::Target>(place);
+        Clear::clear(&mut *self._place);
     }
 }
 

@@ -53,10 +53,12 @@
 //! the `no_cc` feature, works on stable Rust, and does not need a C
 //! compiler.
 
+mod clear;
 mod clear_on_drop;
 mod clear_stack_on_return;
 mod fnoption;
 mod hide;
 
+pub use clear::*;
 pub use clear_on_drop::*;
 pub use clear_stack_on_return::*;
