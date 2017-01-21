@@ -1,3 +1,4 @@
+use std::borrow::{Borrow, BorrowMut};
 use std::cmp::Ordering;
 use std::fmt;
 use std::hash::{Hash, Hasher};
@@ -140,6 +141,32 @@ impl<P, T: ?Sized> AsMut<T> for ClearOnDrop<P>
     #[inline]
     fn as_mut(&mut self) -> &mut T {
         AsMut::as_mut(&mut self._place)
+    }
+}
+
+// std::borrow traits
+
+// The `T: Clear` bound avoids a conflict with the blanket impls
+// `impl<T> Borrow<T> for T` and `impl<T> BorrowMut<T> for T`, since
+// `ClearOnDrop<_>` is not `Clear`.
+
+impl<P, T: ?Sized> Borrow<T> for ClearOnDrop<P>
+    where P: DerefMut + Borrow<T>,
+          P::Target: Clear,
+          T: Clear
+{
+    fn borrow(&self) -> &T {
+        Borrow::borrow(&self._place)
+    }
+}
+
+impl<P, T: ?Sized> BorrowMut<T> for ClearOnDrop<P>
+    where P: DerefMut + BorrowMut<T>,
+          P::Target: Clear,
+          T: Clear
+{
+    fn borrow_mut(&mut self) -> &mut T {
+        BorrowMut::borrow_mut(&mut self._place)
     }
 }
 
