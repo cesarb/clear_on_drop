@@ -27,17 +27,16 @@ use hide::hide_mem;
 /// }   // key is dropped here
 /// assert_eq!(place.value, 0);
 /// ```
-
-pub struct ClearOnDrop<T, P>
-    where T: Default,
-          P: Deref<Target = T> + DerefMut
+pub struct ClearOnDrop<P>
+    where P: DerefMut,
+          P::Target: Default
 {
     _place: P,
 }
 
-impl<T, P> ClearOnDrop<T, P>
-    where T: Default,
-          P: Deref<Target = T> + DerefMut
+impl<P> ClearOnDrop<P>
+    where P: DerefMut,
+          P::Target: Default
 {
     /// Creates a new `ClearOnDrop` which clears `place` on drop.
     ///
@@ -49,9 +48,9 @@ impl<T, P> ClearOnDrop<T, P>
     }
 }
 
-impl<T, P> fmt::Debug for ClearOnDrop<T, P>
-    where T: Default,
-          P: Deref<Target = T> + DerefMut + fmt::Debug
+impl<P> fmt::Debug for ClearOnDrop<P>
+    where P: DerefMut + fmt::Debug,
+          P::Target: Default
 {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -59,11 +58,11 @@ impl<T, P> fmt::Debug for ClearOnDrop<T, P>
     }
 }
 
-impl<T, P> Deref for ClearOnDrop<T, P>
-    where T: Default,
-          P: Deref<Target = T> + DerefMut
+impl<P> Deref for ClearOnDrop<P>
+    where P: DerefMut,
+          P::Target: Default
 {
-    type Target = T;
+    type Target = P::Target;
 
     #[inline]
     fn deref(&self) -> &Self::Target {
@@ -71,9 +70,9 @@ impl<T, P> Deref for ClearOnDrop<T, P>
     }
 }
 
-impl<T, P> DerefMut for ClearOnDrop<T, P>
-    where T: Default,
-          P: Deref<Target = T> + DerefMut
+impl<P> DerefMut for ClearOnDrop<P>
+    where P: DerefMut,
+          P::Target: Default
 {
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
@@ -81,15 +80,15 @@ impl<T, P> DerefMut for ClearOnDrop<T, P>
     }
 }
 
-impl<T, P> Drop for ClearOnDrop<T, P>
-    where T: Default,
-          P: Deref<Target = T> + DerefMut
+impl<P> Drop for ClearOnDrop<P>
+    where P: DerefMut,
+          P::Target: Default
 {
     #[inline]
     fn drop(&mut self) {
         let place = self.deref_mut();
         *place = Default::default();
-        hide_mem::<T>(place);
+        hide_mem::<P::Target>(place);
     }
 }
 
