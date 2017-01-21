@@ -1,10 +1,12 @@
+use std::borrow::{Borrow, BorrowMut};
+use std::cmp::Ordering;
 use std::fmt;
+use std::hash::{Hash, Hasher};
+use std::mem;
 use std::ops::{Deref, DerefMut};
+use std::ptr;
 
 use clear::Clear;
-
-use std::mem;
-use std::ptr;
 
 /// Zeroizes a storage location when dropped.
 ///
@@ -117,6 +119,135 @@ impl<P> Drop for ClearOnDrop<P>
     #[inline]
     fn drop(&mut self) {
         self.clear();
+    }
+}
+
+// std::convert traits
+
+impl<P, T: ?Sized> AsRef<T> for ClearOnDrop<P>
+    where P: DerefMut + AsRef<T>,
+          P::Target: Clear
+{
+    #[inline]
+    fn as_ref(&self) -> &T {
+        AsRef::as_ref(&self._place)
+    }
+}
+
+impl<P, T: ?Sized> AsMut<T> for ClearOnDrop<P>
+    where P: DerefMut + AsMut<T>,
+          P::Target: Clear
+{
+    #[inline]
+    fn as_mut(&mut self) -> &mut T {
+        AsMut::as_mut(&mut self._place)
+    }
+}
+
+// std::borrow traits
+
+// The `T: Clear` bound avoids a conflict with the blanket impls
+// `impl<T> Borrow<T> for T` and `impl<T> BorrowMut<T> for T`, since
+// `ClearOnDrop<_>` is not `Clear`.
+
+impl<P, T: ?Sized> Borrow<T> for ClearOnDrop<P>
+    where P: DerefMut + Borrow<T>,
+          P::Target: Clear,
+          T: Clear
+{
+    #[inline]
+    fn borrow(&self) -> &T {
+        Borrow::borrow(&self._place)
+    }
+}
+
+impl<P, T: ?Sized> BorrowMut<T> for ClearOnDrop<P>
+    where P: DerefMut + BorrowMut<T>,
+          P::Target: Clear,
+          T: Clear
+{
+    #[inline]
+    fn borrow_mut(&mut self) -> &mut T {
+        BorrowMut::borrow_mut(&mut self._place)
+    }
+}
+
+// std::hash traits
+
+impl<P> Hash for ClearOnDrop<P>
+    where P: DerefMut + Hash,
+          P::Target: Clear
+{
+    #[inline]
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        Hash::hash(&self._place, state)
+    }
+}
+
+// std::cmp traits
+
+impl<P, Q> PartialEq<ClearOnDrop<Q>> for ClearOnDrop<P>
+    where P: DerefMut + PartialEq<Q>,
+          P::Target: Clear,
+          Q: DerefMut,
+          Q::Target: Clear
+{
+    #[inline]
+    fn eq(&self, other: &ClearOnDrop<Q>) -> bool {
+        PartialEq::eq(&self._place, &other._place)
+    }
+
+    #[inline]
+    fn ne(&self, other: &ClearOnDrop<Q>) -> bool {
+        PartialEq::ne(&self._place, &other._place)
+    }
+}
+
+impl<P> Eq for ClearOnDrop<P>
+    where P: DerefMut + Eq,
+          P::Target: Clear
+{
+}
+
+impl<P, Q> PartialOrd<ClearOnDrop<Q>> for ClearOnDrop<P>
+    where P: DerefMut + PartialOrd<Q>,
+          P::Target: Clear,
+          Q: DerefMut,
+          Q::Target: Clear
+{
+    #[inline]
+    fn partial_cmp(&self, other: &ClearOnDrop<Q>) -> Option<Ordering> {
+        PartialOrd::partial_cmp(&self._place, &other._place)
+    }
+
+    #[inline]
+    fn lt(&self, other: &ClearOnDrop<Q>) -> bool {
+        PartialOrd::lt(&self._place, &other._place)
+    }
+
+    #[inline]
+    fn le(&self, other: &ClearOnDrop<Q>) -> bool {
+        PartialOrd::le(&self._place, &other._place)
+    }
+
+    #[inline]
+    fn gt(&self, other: &ClearOnDrop<Q>) -> bool {
+        PartialOrd::gt(&self._place, &other._place)
+    }
+
+    #[inline]
+    fn ge(&self, other: &ClearOnDrop<Q>) -> bool {
+        PartialOrd::ge(&self._place, &other._place)
+    }
+}
+
+impl<P> Ord for ClearOnDrop<P>
+    where P: DerefMut + Ord,
+          P::Target: Clear
+{
+    #[inline]
+    fn cmp(&self, other: &Self) -> Ordering {
+        Ord::cmp(&self._place, &other._place)
     }
 }
 
