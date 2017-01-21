@@ -148,6 +148,58 @@ impl<P> Hash for ClearOnDrop<P>
     fn hash<H: Hasher>(&self, state: &mut H) {  self._place.hash(state);  }
 }
 
+impl<P,Q> PartialEq<ClearOnDrop<Q>> for ClearOnDrop<P>
+    where P: DerefMut + PartialEq<Q>,
+          P::Target: Clear,
+          Q: DerefMut,
+          Q::Target: Clear,
+{
+    fn eq(&self, other: &ClearOnDrop<Q>) -> bool {
+        self._place.eq(&other._place)
+    }
+    fn ne(&self, other: &ClearOnDrop<Q>) -> bool {
+        self._place.ne(&other._place)
+    }
+}
+
+impl<P> Eq for ClearOnDrop<P>
+    where P: DerefMut + Eq,
+          P::Target: Clear
+{ }
+
+impl<P,Q> PartialOrd<ClearOnDrop<Q>> for ClearOnDrop<P>
+    where P: DerefMut + PartialOrd<Q>,
+          P::Target: Clear,
+          Q: DerefMut,
+          Q::Target: Clear,
+{
+    fn partial_cmp(&self, other: &ClearOnDrop<Q>) -> Option<::std::cmp::Ordering> {
+        self._place.partial_cmp(&other._place)
+    }
+
+    fn lt(&self, other: &ClearOnDrop<Q>) -> bool {
+        self._place.lt(&other._place)
+    }
+    fn le(&self, other: &ClearOnDrop<Q>) -> bool {
+        self._place.le(&other._place)
+    }
+    fn gt(&self, other: &ClearOnDrop<Q>) -> bool {
+        self._place.gt(&other._place)
+    }
+    fn ge(&self, other: &ClearOnDrop<Q>) -> bool {
+        self._place.ge(&other._place)
+    }
+}
+
+impl<P> Ord for ClearOnDrop<P>
+    where P: DerefMut + Ord,
+          P::Target: Clear
+{
+    fn cmp(&self, other: &Self) -> ::std::cmp::Ordering {
+        self._place.cmp(&other._place)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::ClearOnDrop;
