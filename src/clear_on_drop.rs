@@ -1,5 +1,6 @@
 use std::fmt;
 use std::ops::{Deref, DerefMut};
+use std::hash::{Hash,Hasher};
 
 use clear::Clear;
 
@@ -138,6 +139,13 @@ impl<T, P> AsMut<T> for ClearOnDrop<P>
     fn as_mut(&mut self) -> &mut T {
         AsMut::as_mut(&mut self._place)
     }
+}
+
+impl<P> Hash for ClearOnDrop<P>
+    where P: DerefMut + Hash,
+          P::Target: Clear
+{
+    fn hash<H: Hasher>(&self, state: &mut H) {  self._place.hash(state);  }
 }
 
 #[cfg(test)]
