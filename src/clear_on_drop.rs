@@ -80,6 +80,22 @@ impl<P> ClearOnDrop<P>
     }
 }
 
+impl<P> Clone for ClearOnDrop<P>
+    where P: DerefMut + Clone,
+          P::Target: Clear
+{
+    #[inline]
+    fn clone(&self) -> Self {
+        ClearOnDrop { _place: Clone::clone(&self._place) }
+    }
+
+    #[inline]
+    fn clone_from(&mut self, source: &Self) {
+        self.clear();
+        Clone::clone_from(&mut self._place, &source._place)
+    }
+}
+
 impl<P> fmt::Debug for ClearOnDrop<P>
     where P: DerefMut + fmt::Debug,
           P::Target: Clear
