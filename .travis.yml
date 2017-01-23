@@ -16,4 +16,6 @@ matrix:
 script:
   - cargo build --verbose $FEATURES
   - cargo test --verbose $FEATURES
+  - cargo build --verbose --release $FEATURES
+  - cargo test --verbose --release $FEATURES
   - '[ "$TRAVIS_RUST_VERSION" != "nightly" ] || cargo bench --verbose $FEATURES'
