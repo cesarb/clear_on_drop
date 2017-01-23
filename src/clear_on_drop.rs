@@ -4,6 +4,7 @@ use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::mem;
 use std::ops::{Deref, DerefMut};
+use std::ops::{Index,IndexMut};
 use std::ptr;
 
 use clear::Clear;
@@ -248,6 +249,28 @@ impl<P> Ord for ClearOnDrop<P>
     #[inline]
     fn cmp(&self, other: &Self) -> Ordering {
         Ord::cmp(&self._place, &other._place)
+    }
+}
+
+// more std::ops traits
+
+impl<I,P> Index<I> for ClearOnDrop<P>
+    where P: DerefMut + Index<I>,
+          P::Target: Clear
+{
+    type Output = P::Output;
+
+    fn index(&self, i: I) -> &Self::Output {
+        &self._place[i]
+    }
+}
+
+impl<I,P> IndexMut<I> for ClearOnDrop<P>
+    where P: DerefMut + IndexMut<I>,
+          P::Target: Clear
+{
+    fn index_mut(&mut self, i: I) -> &mut Self::Output {
+        &mut self._place[i]
     }
 }
 
