@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-0' class='srclink' href='../src/clear_on_drop/src/lib.rs.html#1-62' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-0' class='srclink' href='../src/clear_on_drop/src/lib.rs.html#1-65' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Helpers for clearing sensitive data on the stack and heap.</p>
 
 <p>Some kinds of data should not be kept in memory any longer than
@@ -98,7 +98,15 @@ optimizer through the use of atomic instructions. It should not be
 used unless necessary, since it&#39;s less reliable. It is enabled by
 the <code>no_cc</code> feature, works on stable Rust, and does not need a C
 compiler.</p>
-</div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+</div><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class='mod' href='clear/index.html'
+                                  title='clear_on_drop::clear'>clear</a></td>
+                           <td class='docblock-short'>
+                                <p>Traits to completely overwrite a value, without leaking data.</p>
+                           </td>
+                       </tr></table><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
                        <tr class=' module-item'>
                            <td><a class='struct' href='struct.ClearOnDrop.html'
@@ -184,11 +192,9 @@ compiler.</p>
     <script>
         window.rootPath = "../";
         window.currentCrate = "clear_on_drop";
-        window.playgroundUrl = "";
     </script>
     <script src="../jquery.js"></script>
     <script src="../main.js"></script>
-    
     <script defer src="../search-index.js"></script>
 </body>
 </html>

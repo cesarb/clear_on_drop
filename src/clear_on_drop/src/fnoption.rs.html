@@ -70,6 +70,8 @@
 <span id="26">26</span>
 <span id="27">27</span>
 <span id="28">28</span>
+<span id="29">29</span>
+<span id="30">30</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! Wrap a `FnOnce` into something which behaves like a `FnMut`.</span>
 <span class='doccomment'>//!</span>
@@ -85,7 +87,9 @@
     <span class='ident'>f</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>F</span><span class='op'>&gt;</span>,
 }
 
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>R</span>, <span class='ident'>F</span>: <span class='ident'>FnOnce</span>() <span class='op'>-&gt;</span> <span class='ident'>R</span><span class='op'>&gt;</span> <span class='ident'>FnOption</span><span class='op'>&lt;</span><span class='ident'>R</span>, <span class='ident'>F</span><span class='op'>&gt;</span> {
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>R</span>, <span class='ident'>F</span><span class='op'>&gt;</span> <span class='ident'>FnOption</span><span class='op'>&lt;</span><span class='ident'>R</span>, <span class='ident'>F</span><span class='op'>&gt;</span>
+    <span class='kw'>where</span> <span class='ident'>F</span>: <span class='ident'>FnOnce</span>() <span class='op'>-&gt;</span> <span class='ident'>R</span>
+{
     <span class='doccomment'>/// Wraps a `FnOnce` with an `Option`.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>f</span>: <span class='ident'>F</span>) <span class='op'>-&gt;</span> <span class='self'>Self</span> {
@@ -156,11 +160,9 @@
     <script>
         window.rootPath = "../../../";
         window.currentCrate = "clear_on_drop";
-        window.playgroundUrl = "";
     </script>
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
-    
     <script defer src="../../../search-index.js"></script>
 </body>
 </html>
