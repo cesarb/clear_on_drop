@@ -4,6 +4,7 @@ use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::mem;
 use std::ops::{Deref, DerefMut};
+use std::ops::{Index,IndexMut};
 use std::ptr;
 
 use clear::Clear;
@@ -266,6 +267,121 @@ impl<P> Ord for ClearOnDrop<P>
         Ord::cmp(&self._place, &other._place)
     }
 }
+
+// more std::ops traits
+
+impl<I,P> Index<I> for ClearOnDrop<P>
+    where P: DerefMut + Index<I>,
+          P::Target: Clear
+{
+    type Output = P::Output;
+
+    fn index(&self, i: I) -> &Self::Output {
+        &self._place[i]
+    }
+}
+
+impl<I,P> IndexMut<I> for ClearOnDrop<P>
+    where P: DerefMut + IndexMut<I>,
+          P::Target: Clear
+{
+    fn index_mut(&mut self, i: I) -> &mut Self::Output {
+        &mut self._place[i]
+    }
+}
+
+macro_rules! delegate_ops {
+    ($trait_assign:ident, $fn_assign:ident, $trait_binop:ident, $fn_binop:ident) => (
+        use std::ops::{$trait_assign,$trait_binop};
+
+/*
+        // This works but seems dangerous because it can take any sort of R.
+        impl<P,R> $trait_assign<R> for ClearOnDrop<P>
+            where P: DerefMut + $trait_assign<R>,
+                  P::Target: Clear
+        {
+            #[inline]
+            fn $fn_assign(&mut self, other: R) {
+                $trait_assign::$fn_assign(&mut self._place,other)
+            }
+        }
+*/
+
+        // This seems safe because everything is forced ot be a reference.
+        impl<'r,P,R> $trait_assign<&'r R> for ClearOnDrop<P>
+            where P: DerefMut + $trait_assign<&'r R>,
+                  P::Target: Clear,
+                  R: 'r
+        {
+            #[inline]
+            fn $fn_assign(&mut self, other: &'r R) {
+                $trait_assign::$fn_assign(&mut self._place,other)
+            }
+        }
+
+/*
+        // This seems safe because afaik ClearOnDrop is always a reference,
+        // but it does not work currently.
+        impl<'r,P,R> $trait_assign<ClearOnDrop<R>> for ClearOnDrop<P>
+            where P: DerefMut + $trait_assign<&'r R> + 'r,
+                  P::Target: Clear,
+                  R: DerefMut + 'r,
+                  R::Target: Clear,
+        {
+            #[inline]
+            fn $fn_assign(&mut self, other: ClearOnDrop<R>) {
+                $trait_assign::$fn_assign(&mut self._place,&other._place)
+            }
+        }
+*/
+
+        // This works and keeps its arguments safe by only taking references,
+        // but Output is returned by value, which sounds risky. 
+        impl<'p,'r,P,R> $trait_binop<&'r R> for &'p ClearOnDrop<P>
+            where P: DerefMut + 'p,
+                  &'p P: $trait_binop<&'r R>,
+                  P::Target: Clear
+        {
+            type Output = <&'p P as $trait_binop<&'r R>>::Output;
+
+            #[inline]
+            fn $fn_binop(self, other: &'r R) -> Self::Output {
+                $trait_binop::$fn_binop(&self._place,other) 
+            }
+        }
+
+/*
+        // This works but seems dangerous because it can take any sort of R.
+        impl<'p,P,R> $trait_binop<R> for &'p ClearOnDrop<P>
+            where P: DerefMut + 'p,
+                  &'p P: $trait_binop<R>,
+                  P::Target: Clear
+        {
+            type Output = <&'p P as $trait_binop<R>>::Output;
+
+            #[inline]
+            fn $fn_binop(self, other: R) -> Self::Output {
+                $trait_binop::$fn_binop(&self._place,other) 
+            }
+        }
+*/
+    )
+}
+
+delegate_ops!(AddAssign,add_assign,Add,add);
+delegate_ops!(SubAssign,sub_assign,Sub,sub);
+delegate_ops!(MulAssign,mul_assign,Mul,mul);
+delegate_ops!(DivAssign,div_assign,Div,div);
+delegate_ops!(RemAssign,rem_assign,Rem,rem);
+
+delegate_ops!(BitAndAssign,bitand_assign,BitAnd,bitand);
+delegate_ops!(BitXorAssign,bitxor_assign,BitXor,bitxor);
+delegate_ops!(BitOrAssign,bitor_assign,BitOr,bitor);
+
+delegate_ops!(ShlAssign,shl_assign,Shl,shl);
+delegate_ops!(ShrAssign,shr_assign,Shr,shr);
+
+// TODO: Neg Not
 
 #[cfg(test)]
 mod tests {
