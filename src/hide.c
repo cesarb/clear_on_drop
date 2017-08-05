@@ -3,7 +3,7 @@
 __attribute__ ((visibility ("hidden")))
 #endif
 #endif
-void *clear_on_drop_hide(void *ptr) {
+unsigned char *clear_on_drop_hide(unsigned char *ptr) {
     #if defined(__GNUC__)
     /* Not needed with MSVC, since Rust uses LLVM and LTO can't inline this. */
     __asm__ volatile ("" : "=r" (ptr) : "0" (ptr) : "memory");

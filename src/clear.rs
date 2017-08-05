@@ -39,8 +39,8 @@
 //! assert!(!as_bytes(&place).contains(&0x41));
 //! ```
 
-use std::mem;
-use std::ptr;
+use core::mem;
+use core::ptr;
 
 use hide::hide_mem_impl;
 

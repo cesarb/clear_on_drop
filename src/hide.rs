@@ -65,16 +65,14 @@ mod nightly {
 // When a C compiler is available, a dummy C function can be used.
 #[cfg(not(feature = "no_cc"))]
 mod cc {
-    use std::os::raw::c_void;
-
     extern "C" {
-        fn clear_on_drop_hide(ptr: *mut c_void) -> *mut c_void;
+        fn clear_on_drop_hide(ptr: *mut u8) -> *mut u8;
     }
 
     #[inline]
     pub fn hide_mem_impl<T: ?Sized>(ptr: *mut T) {
         unsafe {
-            clear_on_drop_hide(ptr as *mut c_void);
+            clear_on_drop_hide(ptr as *mut u8);
         }
     }
 }
@@ -83,7 +81,7 @@ mod cc {
 // and hope this is enough to confuse the optimizer.
 #[cfg(all(feature = "no_cc", not(feature = "nightly")))]
 mod fallback {
-    use std::sync::atomic::{ATOMIC_USIZE_INIT, AtomicUsize, Ordering};
+    use core::sync::atomic::{ATOMIC_USIZE_INIT, AtomicUsize, Ordering};
 
     #[inline]
     pub fn hide_mem_impl<T: ?Sized>(ptr: *mut T) {
