@@ -1,3 +1,4 @@
+#![cfg_attr(not(test), no_std)]
 #![cfg_attr(feature = "nightly", feature(asm))]
 #![cfg_attr(feature = "nightly", feature(i128_type))]
 #![cfg_attr(feature = "nightly", feature(specialization))]
@@ -54,6 +55,9 @@
 //! used unless necessary, since it's less reliable. It is enabled by
 //! the `no_cc` feature, works on stable Rust, and does not need a C
 //! compiler.
+
+#[cfg(test)]
+extern crate core;
 
 pub mod clear;
 mod clear_on_drop;

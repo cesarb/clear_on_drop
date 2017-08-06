@@ -1,10 +1,10 @@
-use std::borrow::{Borrow, BorrowMut};
-use std::cmp::Ordering;
-use std::fmt;
-use std::hash::{Hash, Hasher};
-use std::mem;
-use std::ops::{Deref, DerefMut};
-use std::ptr;
+use core::borrow::{Borrow, BorrowMut};
+use core::cmp::Ordering;
+use core::fmt;
+use core::hash::{Hash, Hasher};
+use core::mem;
+use core::ops::{Deref, DerefMut};
+use core::ptr;
 
 use clear::Clear;
 
@@ -138,7 +138,7 @@ impl<P> Drop for ClearOnDrop<P>
     }
 }
 
-// std::convert traits
+// core::convert traits
 
 impl<P, T: ?Sized> AsRef<T> for ClearOnDrop<P>
     where P: DerefMut + AsRef<T>,
@@ -160,7 +160,7 @@ impl<P, T: ?Sized> AsMut<T> for ClearOnDrop<P>
     }
 }
 
-// std::borrow traits
+// core::borrow traits
 
 // The `T: Clear` bound avoids a conflict with the blanket impls
 // `impl<T> Borrow<T> for T` and `impl<T> BorrowMut<T> for T`, since
@@ -188,7 +188,7 @@ impl<P, T: ?Sized> BorrowMut<T> for ClearOnDrop<P>
     }
 }
 
-// std::hash traits
+// core::hash traits
 
 impl<P> Hash for ClearOnDrop<P>
     where P: DerefMut + Hash,
@@ -200,7 +200,7 @@ impl<P> Hash for ClearOnDrop<P>
     }
 }
 
-// std::cmp traits
+// core::cmp traits
 
 impl<P, Q> PartialEq<ClearOnDrop<Q>> for ClearOnDrop<P>
     where P: DerefMut + PartialEq<Q>,
