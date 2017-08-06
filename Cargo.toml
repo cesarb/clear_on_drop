@@ -1,15 +1,19 @@
 [package]
 name = "clear_on_drop"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Cesar Eduardo Barros <cesarb@cesarb.eti.br>"]
 description = "Helpers for clearing sensitive data on the stack and heap"
+documentation = "https://docs.rs/clear_on_drop"
 repository = "https://github.com/cesarb/clear_on_drop"
-documentation = "https://cesarb.github.io/clear_on_drop/clear_on_drop/"
 readme = "README.md"
 keywords = ["clear_on_drop", "clear_stack", "zeroize"]
+categories = ["cryptography", "no-std"]
 license = "MIT OR Apache-2.0"
 
 build = "build.rs"
+
+[badges]
+travis-ci = { repository = "cesarb/clear_on_drop" }
 
 [features]
 no_cc = []
