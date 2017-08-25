@@ -345,6 +345,39 @@ mod tests {
             let clear = ClearOnDrop::new(&mut place[..]);
             assert_eq!(&clear[..], "test");
         }
-        assert_eq!(place.as_bytes(), &[0, 0, 0, 0]);
+        assert_eq!(&place[..], "\x00\x00\x00\x00");
+    }
+
+    #[test]
+    fn on_string() {
+        let place: String = "test".into();
+        let clear = ClearOnDrop::new(place);
+        assert_eq!(&clear[..], "test");
+    }
+
+    #[test]
+    fn into_string() {
+        let place: String = "test".into();
+        let ptr = place.as_ptr();
+
+        let clear = ClearOnDrop::new(place);
+        assert_eq!(&clear[..], "test");
+
+        let place = ClearOnDrop::into_place(clear);
+        assert_eq!(place, "\x00\x00\x00\x00");
+        assert_eq!(place.as_ptr(), ptr);
+    }
+
+    #[test]
+    fn into_uncleared_string() {
+        let place: String = "test".into();
+        let ptr = place.as_ptr();
+
+        let clear = ClearOnDrop::new(place);
+        assert_eq!(&clear[..], "test");
+
+        let place = ClearOnDrop::into_uncleared_place(clear);
+        assert_eq!(place, "test");
+        assert_eq!(place.as_ptr(), ptr);
     }
 }
