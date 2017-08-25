@@ -33,15 +33,17 @@ use clear::Clear;
 /// assert_eq!(place.value, 0);
 /// ```
 pub struct ClearOnDrop<P>
-    where P: DerefMut,
-          P::Target: Clear
+where
+    P: DerefMut,
+    P::Target: Clear,
 {
     _place: P,
 }
 
 impl<P> ClearOnDrop<P>
-    where P: DerefMut,
-          P::Target: Clear
+where
+    P: DerefMut,
+    P::Target: Clear,
 {
     /// Creates a new `ClearOnDrop` which clears `place` on drop.
     ///
@@ -86,12 +88,15 @@ impl<P> ClearOnDrop<P>
 }
 
 impl<P> Clone for ClearOnDrop<P>
-    where P: DerefMut + Clone,
-          P::Target: Clear
+where
+    P: DerefMut + Clone,
+    P::Target: Clear,
 {
     #[inline]
     fn clone(&self) -> Self {
-        ClearOnDrop { _place: Clone::clone(&self._place) }
+        ClearOnDrop {
+            _place: Clone::clone(&self._place),
+        }
     }
 
     #[inline]
@@ -102,8 +107,9 @@ impl<P> Clone for ClearOnDrop<P>
 }
 
 impl<P> fmt::Debug for ClearOnDrop<P>
-    where P: DerefMut + fmt::Debug,
-          P::Target: Clear
+where
+    P: DerefMut + fmt::Debug,
+    P::Target: Clear,
 {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -112,8 +118,9 @@ impl<P> fmt::Debug for ClearOnDrop<P>
 }
 
 impl<P> Deref for ClearOnDrop<P>
-    where P: DerefMut,
-          P::Target: Clear
+where
+    P: DerefMut,
+    P::Target: Clear,
 {
     type Target = P::Target;
 
@@ -124,8 +131,9 @@ impl<P> Deref for ClearOnDrop<P>
 }
 
 impl<P> DerefMut for ClearOnDrop<P>
-    where P: DerefMut,
-          P::Target: Clear
+where
+    P: DerefMut,
+    P::Target: Clear,
 {
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
@@ -134,8 +142,9 @@ impl<P> DerefMut for ClearOnDrop<P>
 }
 
 impl<P> Drop for ClearOnDrop<P>
-    where P: DerefMut,
-          P::Target: Clear
+where
+    P: DerefMut,
+    P::Target: Clear,
 {
     #[inline]
     fn drop(&mut self) {
@@ -146,8 +155,9 @@ impl<P> Drop for ClearOnDrop<P>
 // core::convert traits
 
 impl<P, T: ?Sized> AsRef<T> for ClearOnDrop<P>
-    where P: DerefMut + AsRef<T>,
-          P::Target: Clear
+where
+    P: DerefMut + AsRef<T>,
+    P::Target: Clear,
 {
     #[inline]
     fn as_ref(&self) -> &T {
@@ -156,8 +166,9 @@ impl<P, T: ?Sized> AsRef<T> for ClearOnDrop<P>
 }
 
 impl<P, T: ?Sized> AsMut<T> for ClearOnDrop<P>
-    where P: DerefMut + AsMut<T>,
-          P::Target: Clear
+where
+    P: DerefMut + AsMut<T>,
+    P::Target: Clear,
 {
     #[inline]
     fn as_mut(&mut self) -> &mut T {
@@ -172,9 +183,10 @@ impl<P, T: ?Sized> AsMut<T> for ClearOnDrop<P>
 // `ClearOnDrop<_>` is not `Clear`.
 
 impl<P, T: ?Sized> Borrow<T> for ClearOnDrop<P>
-    where P: DerefMut + Borrow<T>,
-          P::Target: Clear,
-          T: Clear
+where
+    P: DerefMut + Borrow<T>,
+    P::Target: Clear,
+    T: Clear,
 {
     #[inline]
     fn borrow(&self) -> &T {
@@ -183,9 +195,10 @@ impl<P, T: ?Sized> Borrow<T> for ClearOnDrop<P>
 }
 
 impl<P, T: ?Sized> BorrowMut<T> for ClearOnDrop<P>
-    where P: DerefMut + BorrowMut<T>,
-          P::Target: Clear,
-          T: Clear
+where
+    P: DerefMut + BorrowMut<T>,
+    P::Target: Clear,
+    T: Clear,
 {
     #[inline]
     fn borrow_mut(&mut self) -> &mut T {
@@ -196,8 +209,9 @@ impl<P, T: ?Sized> BorrowMut<T> for ClearOnDrop<P>
 // core::hash traits
 
 impl<P> Hash for ClearOnDrop<P>
-    where P: DerefMut + Hash,
-          P::Target: Clear
+where
+    P: DerefMut + Hash,
+    P::Target: Clear,
 {
     #[inline]
     fn hash<H: Hasher>(&self, state: &mut H) {
@@ -208,10 +222,11 @@ impl<P> Hash for ClearOnDrop<P>
 // core::cmp traits
 
 impl<P, Q> PartialEq<ClearOnDrop<Q>> for ClearOnDrop<P>
-    where P: DerefMut + PartialEq<Q>,
-          P::Target: Clear,
-          Q: DerefMut,
-          Q::Target: Clear
+where
+    P: DerefMut + PartialEq<Q>,
+    P::Target: Clear,
+    Q: DerefMut,
+    Q::Target: Clear,
 {
     #[inline]
     fn eq(&self, other: &ClearOnDrop<Q>) -> bool {
@@ -225,16 +240,18 @@ impl<P, Q> PartialEq<ClearOnDrop<Q>> for ClearOnDrop<P>
 }
 
 impl<P> Eq for ClearOnDrop<P>
-    where P: DerefMut + Eq,
-          P::Target: Clear
+where
+    P: DerefMut + Eq,
+    P::Target: Clear,
 {
 }
 
 impl<P, Q> PartialOrd<ClearOnDrop<Q>> for ClearOnDrop<P>
-    where P: DerefMut + PartialOrd<Q>,
-          P::Target: Clear,
-          Q: DerefMut,
-          Q::Target: Clear
+where
+    P: DerefMut + PartialOrd<Q>,
+    P::Target: Clear,
+    Q: DerefMut,
+    Q::Target: Clear,
 {
     #[inline]
     fn partial_cmp(&self, other: &ClearOnDrop<Q>) -> Option<Ordering> {
@@ -263,8 +280,9 @@ impl<P, Q> PartialOrd<ClearOnDrop<Q>> for ClearOnDrop<P>
 }
 
 impl<P> Ord for ClearOnDrop<P>
-    where P: DerefMut + Ord,
-          P::Target: Clear
+where
+    P: DerefMut + Ord,
+    P::Target: Clear,
 {
     #[inline]
     fn cmp(&self, other: &Self) -> Ordering {

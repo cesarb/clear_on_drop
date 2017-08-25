@@ -55,7 +55,8 @@ pub trait Clear {
 }
 
 impl<T: ?Sized> Clear for T
-    where T: InitializableFromZeroed
+where
+    T: InitializableFromZeroed,
 {
     #[inline]
     fn clear(&mut self) {
@@ -82,7 +83,8 @@ pub trait InitializableFromZeroed {
 }
 
 impl<T> InitializableFromZeroed for T
-    where T: Default
+where
+    T: Default,
 {
     #[inline]
     unsafe fn initialize(place: *mut Self) {
@@ -91,7 +93,8 @@ impl<T> InitializableFromZeroed for T
 }
 
 impl<T> InitializableFromZeroed for [T]
-    where T: ZeroSafe
+where
+    T: ZeroSafe,
 {
     #[inline]
     unsafe fn initialize(_place: *mut Self) {}

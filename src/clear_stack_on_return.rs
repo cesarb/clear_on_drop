@@ -22,7 +22,8 @@ use hide::{hide_mem, hide_ptr};
 /// ```
 #[inline]
 pub fn clear_stack_on_return<F, R>(pages: usize, mut f: F) -> R
-    where F: FnMut() -> R
+where
+    F: FnMut() -> R,
 {
     let _clear = ClearStackOnDrop { pages: pages };
     // Do not inline f to make sure clear_stack uses the same stack space.
@@ -44,7 +45,8 @@ pub fn clear_stack_on_return<F, R>(pages: usize, mut f: F) -> R
 /// ```
 #[inline]
 pub fn clear_stack_on_return_fnonce<F, R>(pages: usize, f: F) -> R
-    where F: FnOnce() -> R
+where
+    F: FnOnce() -> R,
 {
     let mut f = FnOption::new(f);
     clear_stack_on_return(pages, || f.call_mut()).unwrap()

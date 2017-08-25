@@ -4,8 +4,8 @@
 //! so that it believes the variable has been read and/or modified in
 //! unpredictable ways, while in fact nothing happened.
 //!
-//! Inspired by/based on Linux kernel's OPTIMIZER_HIDE_VAR, which in
-//! turn was based on the earlier RELOC_HIDE macro.
+//! Inspired by/based on Linux kernel's `OPTIMIZER_HIDE_VAR`, which in
+//! turn was based on the earlier `RELOC_HIDE` macro.
 
 /// Make the optimizer believe the memory pointed to by `ptr` is read
 /// and modified arbitrarily.
@@ -81,7 +81,7 @@ mod cc {
 // and hope this is enough to confuse the optimizer.
 #[cfg(all(feature = "no_cc", not(feature = "nightly")))]
 mod fallback {
-    use core::sync::atomic::{ATOMIC_USIZE_INIT, AtomicUsize, Ordering};
+    use core::sync::atomic::{AtomicUsize, Ordering, ATOMIC_USIZE_INIT};
 
     #[inline]
     pub fn hide_mem_impl<T: ?Sized>(ptr: *mut T) {

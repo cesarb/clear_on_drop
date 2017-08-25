@@ -13,7 +13,8 @@ pub struct FnOption<R, F: FnOnce() -> R> {
 }
 
 impl<R, F> FnOption<R, F>
-    where F: FnOnce() -> R
+where
+    F: FnOnce() -> R,
 {
     /// Wraps a `FnOnce` with an `Option`.
     #[inline]
