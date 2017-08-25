@@ -59,6 +59,18 @@ where
         ClearOnDrop { _place: place }
     }
 
+    /// Consumes the `ClearOnDrop`, returning the `place` after clearing.
+    ///
+    /// Note: this is an associated function, which means that you have
+    /// to call it as `ClearOnDrop::into_place(c)` instead of
+    /// `c.into_place()`. This is so that there is no conflict with a
+    /// method on the inner type.
+    #[inline]
+    pub fn into_place(mut c: Self) -> P {
+        c.clear();
+        Self::into_uncleared_place(c)
+    }
+
     /// Consumes the `ClearOnDrop`, returning the `place` without clearing.
     ///
     /// Note: this is an associated function, which means that you have
@@ -72,18 +84,6 @@ where
             mem::forget(c);
             place
         }
-    }
-
-    /// Consumes the `ClearOnDrop`, returning the `place` after clearing.
-    ///
-    /// Note: this is an associated function, which means that you have
-    /// to call it as `ClearOnDrop::into_place(c)` instead of
-    /// `c.into_place()`. This is so that there is no conflict with a
-    /// method on the inner type.
-    #[inline]
-    pub fn into_place(mut c: Self) -> P {
-        c.clear();
-        Self::into_uncleared_place(c)
     }
 }
 
