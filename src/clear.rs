@@ -99,11 +99,7 @@ impl<T> InitializableFromZeroed for [T]
 
 impl InitializableFromZeroed for str {
     #[inline]
-    unsafe fn initialize(place: *mut str) {
-        for x in (*place).as_bytes_mut() {
-            *x = 0;
-        }
-    }
+    unsafe fn initialize(_place: *mut Self) {}
 }
 
 /// Unsafe trait to indicate which types are safe to set to all-bits-zero.

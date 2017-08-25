@@ -342,7 +342,7 @@ mod tests {
     fn on_str_slice() {
         let mut place: Box<str> = "test".into();
         {
-            let mut clear = ClearOnDrop::new(&mut place[..]);
+            let clear = ClearOnDrop::new(&mut place[..]);
             assert_eq!(&clear[..], "test");
         }
         assert_eq!(place.as_bytes(), &[0, 0, 0, 0]);
