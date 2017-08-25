@@ -47,6 +47,11 @@ impl<P> ClearOnDrop<P>
     ///
     /// The `place` parameter can be a `&mut T`, a `Box<T>`, or other
     /// containers which behave like `Box<T>`.
+    ///
+    /// Note: only the first level of dereference will be cleared. Do
+    /// not use `&mut Box<T>` or similar as the place, since the heap
+    /// contents won't be cleared in that case. If you need the place
+    /// back, use `ClearOnDrop::into_place(...)` instead of a borrow.
     #[inline]
     pub fn new(place: P) -> Self {
         ClearOnDrop { _place: place }
@@ -336,5 +341,48 @@ mod tests {
         let mut clear = ClearOnDrop::new(place);
         clear.copy_from_slice(&DATA);
         assert_eq!(&clear[..], DATA);
+    }
+
+    #[test]
+    fn on_str_slice() {
+        let mut place: Box<str> = "test".into();
+        {
+            let clear = ClearOnDrop::new(&mut place[..]);
+            assert_eq!(&clear[..], "test");
+        }
+        assert_eq!(&place[..], "\x00\x00\x00\x00");
+    }
+
+    #[test]
+    fn on_string() {
+        let place: String = "test".into();
+        let clear = ClearOnDrop::new(place);
+        assert_eq!(&clear[..], "test");
+    }
+
+    #[test]
+    fn into_string() {
+        let place: String = "test".into();
+        let ptr = place.as_ptr();
+
+        let clear = ClearOnDrop::new(place);
+        assert_eq!(&clear[..], "test");
+
+        let place = ClearOnDrop::into_place(clear);
+        assert_eq!(place, "\x00\x00\x00\x00");
+        assert_eq!(place.as_ptr(), ptr);
+    }
+
+    #[test]
+    fn into_uncleared_string() {
+        let place: String = "test".into();
+        let ptr = place.as_ptr();
+
+        let clear = ClearOnDrop::new(place);
+        assert_eq!(&clear[..], "test");
+
+        let place = ClearOnDrop::into_uncleared_place(clear);
+        assert_eq!(place, "test");
+        assert_eq!(place.as_ptr(), ptr);
     }
 }
