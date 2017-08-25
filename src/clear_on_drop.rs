@@ -47,6 +47,11 @@ impl<P> ClearOnDrop<P>
     ///
     /// The `place` parameter can be a `&mut T`, a `Box<T>`, or other
     /// containers which behave like `Box<T>`.
+    ///
+    /// Note: only the first level of dereference will be cleared. Do
+    /// not use `&mut Box<T>` or similar as the place, since the heap
+    /// contents won't be cleared in that case. If you need the place
+    /// back, use `ClearOnDrop::into_place(...)` instead of a borrow.
     #[inline]
     pub fn new(place: P) -> Self {
         ClearOnDrop { _place: place }
