@@ -337,4 +337,14 @@ mod tests {
         clear.copy_from_slice(&DATA);
         assert_eq!(&clear[..], DATA);
     }
+
+    #[test]
+    fn on_str_slice() {
+        let mut place: Box<str> = "test".into();
+        {
+            let mut clear = ClearOnDrop::new(&mut place[..]);
+            assert_eq!(&clear[..], "test");
+        }
+        assert_eq!(place.as_bytes(), &[0, 0, 0, 0]);
+    }
 }
