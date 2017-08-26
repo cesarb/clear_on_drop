@@ -22,18 +22,11 @@ pub fn hide_ptr<P>(mut ptr: P) -> P {
     ptr
 }
 
-#[cfg(feature = "nightly")]
-pub use self::nightly::*;
-
-#[cfg(not(feature = "no_cc"))]
-pub use self::cc::*;
-
-#[cfg(all(feature = "no_cc", not(feature = "nightly")))]
-pub use self::fallback::*;
+pub use self::impls::hide_mem_impl;
 
 // On nightly, inline assembly can be used.
 #[cfg(feature = "nightly")]
-mod nightly {
+mod impls {
     trait HideMemImpl {
         fn hide_mem_impl(ptr: *mut Self);
     }
@@ -64,7 +57,7 @@ mod nightly {
 
 // When a C compiler is available, a dummy C function can be used.
 #[cfg(not(feature = "no_cc"))]
-mod cc {
+mod impls {
     extern "C" {
         fn clear_on_drop_hide(ptr: *mut u8) -> *mut u8;
     }
@@ -80,7 +73,7 @@ mod cc {
 // When neither is available, pretend the pointer is sent to a thread,
 // and hope this is enough to confuse the optimizer.
 #[cfg(all(feature = "no_cc", not(feature = "nightly")))]
-mod fallback {
+mod impls {
     use core::sync::atomic::{AtomicUsize, Ordering, ATOMIC_USIZE_INIT};
 
     #[inline]
