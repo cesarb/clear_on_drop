@@ -76,7 +76,7 @@ mod impls {
 mod impls {
     use core::sync::atomic::{AtomicUsize, Ordering, ATOMIC_USIZE_INIT};
 
-    #[inline]
+    #[inline(never)]
     pub fn hide_mem_impl<T: ?Sized>(ptr: *mut T) {
         static DUMMY: AtomicUsize = ATOMIC_USIZE_INIT;
         DUMMY.store(ptr as *mut u8 as usize, Ordering::Release);
