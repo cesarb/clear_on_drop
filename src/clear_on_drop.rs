@@ -343,6 +343,17 @@ mod tests {
     }
 
     #[test]
+    fn on_fixed_size_array() {
+        let mut place: [u32; 4] = Default::default();
+        {
+            let mut clear = ClearOnDrop::new(&mut place);
+            clear.copy_from_slice(&DATA);
+            assert_eq!(&clear[..], DATA);
+        }
+        assert_eq!(place, [0; 4]);
+    }
+
+    #[test]
     fn on_slice() {
         let mut place: [u32; 4] = Default::default();
         {
