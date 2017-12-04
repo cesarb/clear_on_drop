@@ -4,7 +4,7 @@
 ## Operating System (VM environment) ##
 
 # Rust needs at least Visual Studio 2013 Appveyor OS for MSVC targets.
-os: Visual Studio 2015
+#os: Visual Studio 2015
 
 ## Build Matrix ##
 
@@ -114,6 +114,12 @@ matrix:
 # For simple configurations, instead of using the build matrix, you can simply set the
 # default-toolchain and default-host manually here.
 install:
+  - ps: >-
+      If ($Env:TARGET -eq 'x86_64-pc-windows-gnu') {
+        $Env:PATH += ';C:\msys64\mingw64\bin'
+      } ElseIf ($Env:TARGET -eq 'i686-pc-windows-gnu') {
+        $Env:PATH += ';C:\msys64\mingw32\bin'
+      }
   - appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
   - rustup-init -yv --default-toolchain %channel% --default-host %target%
   - set PATH=%PATH%;%USERPROFILE%\.cargo\bin
