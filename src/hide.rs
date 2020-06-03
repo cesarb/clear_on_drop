@@ -35,7 +35,7 @@ mod impls {
         #[inline]
         default fn hide_mem_impl(ptr: *mut Self) {
             unsafe {
-                asm!("" : : "r" (ptr as *mut u8) : "memory");
+                llvm_asm!("" : : "r" (ptr as *mut u8) : "memory");
             }
         }
     }
@@ -44,7 +44,7 @@ mod impls {
         #[inline]
         fn hide_mem_impl(ptr: *mut Self) {
             unsafe {
-                asm!("" : "=*m" (ptr) : "*0" (ptr));
+                llvm_asm!("" : "=*m" (ptr) : "*0" (ptr));
             }
         }
     }
