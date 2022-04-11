@@ -25,9 +25,9 @@ pub fn clear_stack_on_return<F, R>(pages: usize, mut f: F) -> R
 where
     F: FnMut() -> R,
 {
-    let _clear = ClearStackOnDrop { pages: pages };
+    let _clear = ClearStackOnDrop { pages };
     // Do not inline f to make sure clear_stack uses the same stack space.
-    hide_ptr::<&mut FnMut() -> R>(&mut f)()
+    hide_ptr::<&mut dyn FnMut() -> R>(&mut f)()
 }
 
 /// Calls a closure and overwrites its stack on return.
