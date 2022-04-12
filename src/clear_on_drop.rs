@@ -6,7 +6,7 @@ use core::mem;
 use core::ops::{Deref, DerefMut};
 use core::ptr;
 
-use clear::Clear;
+use crate::clear::Clear;
 
 /// Zeroizes a storage location when dropped.
 ///

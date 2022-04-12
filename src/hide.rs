@@ -76,11 +76,11 @@ mod impls {
 // and hope this is enough to confuse the optimizer.
 #[cfg(all(feature = "no_cc", not(feature = "nightly")))]
 mod impls {
-    use core::sync::atomic::{AtomicUsize, Ordering, ATOMIC_USIZE_INIT};
+    use core::sync::atomic::{AtomicUsize, Ordering};
 
     #[inline(never)]
     pub fn hide_mem_impl<T: ?Sized>(ptr: *mut T) {
-        static DUMMY: AtomicUsize = ATOMIC_USIZE_INIT;
+        static DUMMY: AtomicUsize = AtomicUsize::new(0);
         DUMMY.store(ptr as *mut u8 as usize, Ordering::Release);
     }
 }

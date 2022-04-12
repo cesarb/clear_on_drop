@@ -63,5 +63,5 @@ mod clear_stack_on_return;
 mod fnoption;
 mod hide;
 
-pub use clear_on_drop::*;
-pub use clear_stack_on_return::*;
+pub use crate::clear_on_drop::*;
+pub use crate::clear_stack_on_return::*;

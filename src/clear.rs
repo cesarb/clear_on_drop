@@ -42,7 +42,7 @@
 use core::mem;
 use core::ptr;
 
-use hide::hide_mem_impl;
+use crate::hide::hide_mem_impl;
 
 /// An operation to completely overwrite a value, without leaking data.
 ///
