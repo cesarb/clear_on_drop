@@ -25,3 +25,14 @@ nightly = ["no_cc"]
 cc = "1.0"
 
 [dependencies]
+
+[dev-dependencies]
+criterion = { version = "0.3", features = ["cargo_bench_support", "html_reports"] }
+
+[[bench]]
+name = "clear_on_drop"
+harness = false
+
+[[bench]]
+name = "clear_stack_on_return"
+harness = false
