@@ -26,19 +26,19 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ matrix.toolchain }}-${{ hashFiles('**/Cargo.lock', '**/Cargo.toml') }}
       - run: cargo build --verbose
-      - run: cargo test --verbose
-      - run: cargo build --verbose --release
-      - run: cargo test --verbose --release
       - run: cargo build --verbose --features=no_cc
-      - run: cargo test --verbose --features=no_cc
-      - run: cargo build --verbose --release --features=no_cc
-      - run: cargo test --verbose --release --features=no_cc
       - run: cargo build --verbose --features=nightly
         if: ${{ matrix.toolchain == 'nightly' }}
-      - run: cargo test --verbose --features=nightly
-        if: ${{ matrix.toolchain == 'nightly' }}
+      - run: cargo build --verbose --release
+      - run: cargo build --verbose --release --features=no_cc
       - run: cargo build --verbose --release --features=nightly
         if: ${{ matrix.toolchain == 'nightly' }}
+      - run: cargo test --verbose
+      - run: cargo test --verbose --features=no_cc
+      - run: cargo test --verbose --features=nightly
+        if: ${{ matrix.toolchain == 'nightly' }}
+      - run: cargo test --verbose --release
+      - run: cargo test --verbose --release --features=no_cc
       - run: cargo test --verbose --release --features=nightly
         if: ${{ matrix.toolchain == 'nightly' }}
       - run: cargo bench --verbose
