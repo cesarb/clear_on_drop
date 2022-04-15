@@ -27,6 +27,8 @@ pub use self::impls::hide_mem_impl;
 // On nightly, inline assembly can be used.
 #[cfg(feature = "nightly")]
 mod impls {
+    use core::arch::asm;
+
     trait HideMemImpl {
         fn hide_mem_impl(ptr: *mut Self);
     }
@@ -35,8 +37,8 @@ mod impls {
         #[inline]
         default fn hide_mem_impl(ptr: *mut Self) {
             unsafe {
-                llvm_asm!("" : : "r" (ptr as *mut u8) : "memory");
-                // asm!("", in(reg) (ptr as *mut u8), options(nostack));
+                //llvm_asm!("" : : "r" (ptr as *mut u8) : "memory");
+                asm!("/* {0} */", in(reg) (ptr as *mut u8), options(nostack));
             }
         }
     }
@@ -45,8 +47,8 @@ mod impls {
         #[inline]
         fn hide_mem_impl(ptr: *mut Self) {
             unsafe {
-                llvm_asm!("" : "=*m" (ptr) : "*0" (ptr));
-                // asm!("", in(reg) ptr, options(nostack));
+                //llvm_asm!("" : "=*m" (ptr) : "*0" (ptr));
+                asm!("/* {0} */", in(reg) ptr, options(nostack));
             }
         }
     }
