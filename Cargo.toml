@@ -13,10 +13,6 @@ license = "MIT OR Apache-2.0"
 
 build = "build.rs"
 
-[badges]
-travis-ci = { repository = "cesarb/clear_on_drop" }
-appveyor = { repository = "cesarb/clear_on_drop" }
-
 [features]
 no_cc = []
 nightly = ["no_cc"]

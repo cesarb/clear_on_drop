@@ -1,0 +1,47 @@
+name: tests
+
+on: [push, pull_request]
+
+jobs:
+  tests:
+    name: Run tests
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        runner: [ubuntu-latest, windows-latest, macos-latest]
+        toolchain: [1.59, stable, beta, nightly]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ matrix.toolchain }}
+          override: true
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ matrix.toolchain }}-${{ hashFiles('**/Cargo.lock', '**/Cargo.toml') }}
+      - run: cargo build --verbose
+      - run: cargo test --verbose
+      - run: cargo build --verbose --release
+      - run: cargo test --verbose --release
+      - run: cargo build --verbose --features=no_cc
+      - run: cargo test --verbose --features=no_cc
+      - run: cargo build --verbose --release --features=no_cc
+      - run: cargo test --verbose --release --features=no_cc
+      - run: cargo build --verbose --features=nightly
+        if: ${{ matrix.toolchain == 'nightly' }}
+      - run: cargo test --verbose --features=nightly
+        if: ${{ matrix.toolchain == 'nightly' }}
+      - run: cargo build --verbose --release --features=nightly
+        if: ${{ matrix.toolchain == 'nightly' }}
+      - run: cargo test --verbose --release --features=nightly
+        if: ${{ matrix.toolchain == 'nightly' }}
+      - run: cargo bench --verbose
+      - run: cargo bench --verbose --features=no_cc
+      - run: cargo bench --verbose --features=nightly
+        if: ${{ matrix.toolchain == 'nightly' }}
