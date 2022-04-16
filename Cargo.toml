@@ -1,6 +1,6 @@
 [package]
 name = "clear_on_drop"
-version = "0.2.4"
+version = "0.2.5"
 edition = "2018"
 authors = ["Cesar Eduardo Barros <cesarb@cesarb.eti.br>"]
 description = "Helpers for clearing sensitive data on the stack and heap"
