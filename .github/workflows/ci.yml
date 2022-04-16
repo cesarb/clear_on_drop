@@ -9,7 +9,7 @@ jobs:
     strategy:
       matrix:
         runner: [ubuntu-latest, windows-latest, macos-latest]
-        toolchain: [1.36.0, 1.59.0, stable, beta, nightly]
+        toolchain: [1.34.2, 1.59.0, stable, beta, nightly]
     steps:
       - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
@@ -34,14 +34,20 @@ jobs:
       - run: cargo build --verbose --release --features=nightly
         if: ${{ matrix.toolchain == 'nightly' }}
       - run: cargo test --verbose
+        if: ${{ matrix.toolchain != '1.34.2' }}
       - run: cargo test --verbose --features=no_cc
+        if: ${{ matrix.toolchain != '1.34.2' }}
       - run: cargo test --verbose --features=nightly
         if: ${{ matrix.toolchain == 'nightly' }}
       - run: cargo test --verbose --release
+        if: ${{ matrix.toolchain != '1.34.2' }}
       - run: cargo test --verbose --release --features=no_cc
+        if: ${{ matrix.toolchain != '1.34.2' }}
       - run: cargo test --verbose --release --features=nightly
         if: ${{ matrix.toolchain == 'nightly' }}
       - run: cargo bench --verbose
+        if: ${{ matrix.toolchain != '1.34.2' }}
       - run: cargo bench --verbose --features=no_cc
+        if: ${{ matrix.toolchain != '1.34.2' }}
       - run: cargo bench --verbose --features=nightly
         if: ${{ matrix.toolchain == 'nightly' }}
