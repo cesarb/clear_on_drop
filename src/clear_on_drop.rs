@@ -161,6 +161,7 @@ where
                 != 0
             {
                 self.clear();
+                ManuallyDrop::drop(&mut self._place);
             }
         }
     }
