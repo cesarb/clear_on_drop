@@ -88,6 +88,7 @@ mod impls {
 }
 
 #[cfg(test)]
+#[cfg(not(miri))]
 mod tests {
     struct Place {
         data: [u32; 4],
