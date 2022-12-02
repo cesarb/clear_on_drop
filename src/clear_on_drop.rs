@@ -1,10 +1,10 @@
 use core::borrow::{Borrow, BorrowMut};
 use core::cmp::Ordering;
-use core::fmt;
 use core::hash::{Hash, Hasher};
-use core::mem;
+use core::mem::{size_of_val, MaybeUninit};
 use core::ops::{Deref, DerefMut};
 use core::ptr;
+use core::{fmt, mem};
 
 use crate::clear::Clear;
 
@@ -37,7 +37,7 @@ where
     P: DerefMut,
     P::Target: Clear,
 {
-    _place: P,
+    _place: MaybeUninit<P>,
 }
 
 impl<P> ClearOnDrop<P>
@@ -56,7 +56,9 @@ where
     /// back, use `ClearOnDrop::into_place(...)` instead of a borrow.
     #[inline]
     pub fn new(place: P) -> Self {
-        ClearOnDrop { _place: place }
+        ClearOnDrop {
+            _place: MaybeUninit::new(place),
+        }
     }
 
     /// Consumes the `ClearOnDrop`, returning the `place` after clearing.
@@ -78,11 +80,11 @@ where
     /// `c.into_uncleared_place()`. This is so that there is no conflict
     /// with a method on the inner type.
     #[inline]
-    pub fn into_uncleared_place(c: Self) -> P {
+    pub fn into_uncleared_place(mut c: Self) -> P {
         unsafe {
             let place = ptr::read(&c._place);
-            mem::forget(c);
-            place
+            ptr::write(&mut c._place, MaybeUninit::zeroed());
+            place.assume_init()
         }
     }
 }
@@ -95,14 +97,19 @@ where
     #[inline]
     fn clone(&self) -> Self {
         ClearOnDrop {
-            _place: Clone::clone(&self._place),
+            _place: MaybeUninit::new(unsafe { Clone::clone(&self._place.assume_init_ref()) }),
         }
     }
 
     #[inline]
     fn clone_from(&mut self, source: &Self) {
         self.clear();
-        Clone::clone_from(&mut self._place, &source._place)
+        unsafe {
+            Clone::clone_from(
+                &mut self._place.assume_init_ref(),
+                &source._place.assume_init_ref(),
+            )
+        }
     }
 }
 
@@ -126,7 +133,7 @@ where
 
     #[inline]
     fn deref(&self) -> &Self::Target {
-        Deref::deref(&self._place)
+        unsafe { Deref::deref(self._place.assume_init_ref()) }
     }
 }
 
@@ -137,7 +144,7 @@ where
 {
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
-        DerefMut::deref_mut(&mut self._place)
+        unsafe { DerefMut::deref_mut(self._place.assume_init_mut()) }
     }
 }
 
@@ -148,7 +155,15 @@ where
 {
     #[inline]
     fn drop(&mut self) {
-        self.clear();
+        let ptr = self._place.as_ptr() as *mut u8;
+        unsafe {
+            if (0..mem::size_of::<MaybeUninit<P>>() as isize)
+                .fold(0, |acc, i| acc + *ptr.offset(i) as i32)
+                != 0
+            {
+                self.clear();
+            }
+        }
     }
 }
 
@@ -161,7 +176,7 @@ where
 {
     #[inline]
     fn as_ref(&self) -> &T {
-        AsRef::as_ref(&self._place)
+        unsafe { AsRef::as_ref(self._place.assume_init_ref()) }
     }
 }
 
@@ -172,7 +187,7 @@ where
 {
     #[inline]
     fn as_mut(&mut self) -> &mut T {
-        AsMut::as_mut(&mut self._place)
+        unsafe { AsMut::as_mut(self._place.assume_init_mut()) }
     }
 }
 
@@ -190,7 +205,7 @@ where
 {
     #[inline]
     fn borrow(&self) -> &T {
-        Borrow::borrow(&self._place)
+        unsafe { Borrow::borrow(self._place.assume_init_ref()) }
     }
 }
 
@@ -202,7 +217,7 @@ where
 {
     #[inline]
     fn borrow_mut(&mut self) -> &mut T {
-        BorrowMut::borrow_mut(&mut self._place)
+        unsafe { BorrowMut::borrow_mut(self._place.assume_init_mut()) }
     }
 }
 
@@ -215,7 +230,7 @@ where
 {
     #[inline]
     fn hash<H: Hasher>(&self, state: &mut H) {
-        Hash::hash(&self._place, state)
+        unsafe { Hash::hash(self._place.assume_init_ref(), state) }
     }
 }
 
@@ -230,12 +245,22 @@ where
 {
     #[inline]
     fn eq(&self, other: &ClearOnDrop<Q>) -> bool {
-        PartialEq::eq(&self._place, &other._place)
+        unsafe {
+            PartialEq::eq(
+                &self._place.assume_init_ref(),
+                &other._place.assume_init_ref(),
+            )
+        }
     }
 
     #[inline]
     fn ne(&self, other: &ClearOnDrop<Q>) -> bool {
-        PartialEq::ne(&self._place, &other._place)
+        unsafe {
+            PartialEq::ne(
+                &self._place.assume_init_ref(),
+                &other._place.assume_init_ref(),
+            )
+        }
     }
 }
 
@@ -255,27 +280,52 @@ where
 {
     #[inline]
     fn partial_cmp(&self, other: &ClearOnDrop<Q>) -> Option<Ordering> {
-        PartialOrd::partial_cmp(&self._place, &other._place)
+        unsafe {
+            PartialOrd::partial_cmp(
+                &self._place.assume_init_ref(),
+                &other._place.assume_init_ref(),
+            )
+        }
     }
 
     #[inline]
     fn lt(&self, other: &ClearOnDrop<Q>) -> bool {
-        PartialOrd::lt(&self._place, &other._place)
+        unsafe {
+            PartialOrd::lt(
+                &self._place.assume_init_ref(),
+                &other._place.assume_init_ref(),
+            )
+        }
     }
 
     #[inline]
     fn le(&self, other: &ClearOnDrop<Q>) -> bool {
-        PartialOrd::le(&self._place, &other._place)
+        unsafe {
+            PartialOrd::le(
+                &self._place.assume_init_ref(),
+                &other._place.assume_init_ref(),
+            )
+        }
     }
 
     #[inline]
     fn gt(&self, other: &ClearOnDrop<Q>) -> bool {
-        PartialOrd::gt(&self._place, &other._place)
+        unsafe {
+            PartialOrd::gt(
+                &self._place.assume_init_ref(),
+                &other._place.assume_init_ref(),
+            )
+        }
     }
 
     #[inline]
     fn ge(&self, other: &ClearOnDrop<Q>) -> bool {
-        PartialOrd::ge(&self._place, &other._place)
+        unsafe {
+            PartialOrd::ge(
+                &self._place.assume_init_ref(),
+                &other._place.assume_init_ref(),
+            )
+        }
     }
 }
 
@@ -286,7 +336,12 @@ where
 {
     #[inline]
     fn cmp(&self, other: &Self) -> Ordering {
-        Ord::cmp(&self._place, &other._place)
+        unsafe {
+            Ord::cmp(
+                &self._place.assume_init_ref(),
+                &other._place.assume_init_ref(),
+            )
+        }
     }
 }
 
@@ -320,6 +375,7 @@ mod tests {
         assert_eq!(clear.data, DATA);
     }
 
+    #[cfg(not(miri))]
     #[test]
     fn into_box() {
         let place: Box<Place> = Box::new(Default::default());
@@ -389,6 +445,7 @@ mod tests {
         assert_eq!(&clear[..], "test");
     }
 
+    #[cfg(not(miri))]
     #[test]
     fn into_string() {
         let place: String = "test".into();
