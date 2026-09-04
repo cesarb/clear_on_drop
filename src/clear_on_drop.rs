@@ -414,4 +414,51 @@ mod tests {
         assert_eq!(place, "test");
         assert_eq!(place.as_ptr(), ptr);
     }
-}
+
+    #[test]
+    fn clear_panicking_drop_is_sound() {
+        use std::panic::{catch_unwind, AssertUnwindSafe};
+        use std::sync::atomic::{AtomicBool, Ordering};
+
+        static FIRED: AtomicBool = AtomicBool::new(false);
+
+        struct PanicOnDrop {
+            id: u64,
+        }
+        impl Default for PanicOnDrop {
+            fn default() -> Self { PanicOnDrop { id: 0 } }
+        }
+        impl Drop for PanicOnDrop {
+            fn drop(&mut self) {
+                let _ = self.id;
+                // Panic only on the first drop; the re-initialized value that
+                // the fix leaves behind is dropped later and must not panic
+                // again (a second panic while unwinding would abort).
+                if !FIRED.swap(true, Ordering::SeqCst) {
+                    panic!("drop panic");
+                }
+            }
+        }
+        // `heap` is declared first, so drop glue frees it before `bomb` panics.
+        // On the re-drop during unwinding it would be freed a second time.
+        struct Item {
+            heap: String,
+            bomb: PanicOnDrop,
+        }
+        impl Default for Item {
+            fn default() -> Self {
+                Item { heap: "x".repeat(128), bomb: PanicOnDrop::default() }
+            }
+        }
+
+        let place: Box<Item> = Box::new(Item::default());
+        // guard drops here: ClearOnDrop::drop -> clear -> drop_in_place(Item)
+        // frees heap, then bomb panics; re-initialization is skipped, and the
+        // facade's Box<Item> drops again during unwinding -> heap freed twice
+        // (double-free). Without the fix this aborts the process.
+        let result = catch_unwind(AssertUnwindSafe(|| {
+            let guard = ClearOnDrop::new(place);
+            drop(guard);
+        }));
+        assert!(result.is_err(), "expected the bomb Drop to unwind");
+    }}
