@@ -1,3 +1,8 @@
+NOTE: this crate is no longer maintained. Use the [zeroize](https://crates.io/crates/zeroize) crate instead.
+
+* Instead of `ClearOnDrop`, use `Zeroizing`
+* Instead of `clear_stack`, use `zeroize_stack`
+
 # Helpers for clearing sensitive data on the stack and heap
 
 Some kinds of data should not be kept in memory any longer than
