@@ -58,15 +58,34 @@ impl<T: ?Sized> Clear for T
 where
     T: InitializableFromZeroed,
 {
-    #[inline]
     fn clear(&mut self) {
         let size = mem::size_of_val(self);
         unsafe {
             let ptr = self as *mut Self;
+
+            // Re-initialization must run even if `drop_in_place` unwinds. T's
+            // Drop is user-controlled and may panic; if it does, `self` is left
+            // half-destroyed. `ClearOnDrop`'s own `Drop` then drops the backing
+            // place again, running the destructor on that half-destroyed value
+            // -- a double-drop / double-free reachable from safe Rust. A guard
+            // performs the zero + re-init on every exit path, so `self` always
+            // holds a valid, droppable value.
+            struct ReinitOnDrop<T: ?Sized + InitializableFromZeroed> {
+                ptr: *mut T,
+                size: usize,
+            }
+            impl<T: ?Sized + InitializableFromZeroed> Drop for ReinitOnDrop<T> {
+                fn drop(&mut self) {
+                    unsafe {
+                        ptr::write_bytes(self.ptr as *mut u8, 0, self.size);
+                        hide_mem_impl::<T>(self.ptr);
+                        T::initialize(self.ptr);
+                    }
+                }
+            }
+
+            let _guard = ReinitOnDrop::<Self> { ptr, size };
             ptr::drop_in_place(ptr);
-            ptr::write_bytes(ptr as *mut u8, 0, size);
-            hide_mem_impl::<Self>(ptr);
-            Self::initialize(ptr);
         }
     }
 }
