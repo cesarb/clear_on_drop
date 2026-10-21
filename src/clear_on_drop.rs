@@ -1,10 +1,10 @@
 use core::borrow::{Borrow, BorrowMut};
 use core::cmp::Ordering;
-use core::fmt;
 use core::hash::{Hash, Hasher};
-use core::mem;
+use core::mem::ManuallyDrop;
 use core::ops::{Deref, DerefMut};
 use core::ptr;
+use core::{fmt, mem};
 
 use crate::clear::Clear;
 
@@ -37,7 +37,7 @@ where
     P: DerefMut,
     P::Target: Clear,
 {
-    _place: P,
+    _place: ManuallyDrop<P>,
 }
 
 impl<P> ClearOnDrop<P>
@@ -56,7 +56,9 @@ where
     /// back, use `ClearOnDrop::into_place(...)` instead of a borrow.
     #[inline]
     pub fn new(place: P) -> Self {
-        ClearOnDrop { _place: place }
+        ClearOnDrop {
+            _place: ManuallyDrop::new(place),
+        }
     }
 
     /// Consumes the `ClearOnDrop`, returning the `place` after clearing.
@@ -78,11 +80,15 @@ where
     /// `c.into_uncleared_place()`. This is so that there is no conflict
     /// with a method on the inner type.
     #[inline]
-    pub fn into_uncleared_place(c: Self) -> P {
+    pub fn into_uncleared_place(mut c: Self) -> P {
         unsafe {
             let place = ptr::read(&c._place);
-            mem::forget(c);
-            place
+            ptr::write_bytes(
+                &mut c._place as *mut _ as *mut u8,
+                0,
+                mem::size_of::<ManuallyDrop<P>>(),
+            );
+            ManuallyDrop::into_inner(place)
         }
     }
 }
@@ -126,7 +132,7 @@ where
 
     #[inline]
     fn deref(&self) -> &Self::Target {
-        Deref::deref(&self._place)
+        Deref::deref(&self._place as &P)
     }
 }
 
@@ -137,7 +143,7 @@ where
 {
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
-        DerefMut::deref_mut(&mut self._place)
+        DerefMut::deref_mut(&mut self._place as &mut P)
     }
 }
 
@@ -148,7 +154,16 @@ where
 {
     #[inline]
     fn drop(&mut self) {
-        self.clear();
+        let ptr = &mut self._place as *mut _ as *mut u8;
+        unsafe {
+            if (0..mem::size_of::<ManuallyDrop<P>>() as isize)
+                .fold(0, |acc, i| acc + *ptr.offset(i) as i32)
+                != 0
+            {
+                self.clear();
+                ManuallyDrop::drop(&mut self._place);
+            }
+        }
     }
 }
 
@@ -161,7 +176,7 @@ where
 {
     #[inline]
     fn as_ref(&self) -> &T {
-        AsRef::as_ref(&self._place)
+        AsRef::as_ref(&self._place as &P)
     }
 }
 
@@ -172,7 +187,7 @@ where
 {
     #[inline]
     fn as_mut(&mut self) -> &mut T {
-        AsMut::as_mut(&mut self._place)
+        AsMut::as_mut(&mut self._place as &mut P)
     }
 }
 
@@ -190,7 +205,7 @@ where
 {
     #[inline]
     fn borrow(&self) -> &T {
-        Borrow::borrow(&self._place)
+        Borrow::borrow(&self._place as &P)
     }
 }
 
@@ -202,7 +217,7 @@ where
 {
     #[inline]
     fn borrow_mut(&mut self) -> &mut T {
-        BorrowMut::borrow_mut(&mut self._place)
+        BorrowMut::borrow_mut(&mut self._place as &mut P)
     }
 }
 
@@ -215,7 +230,7 @@ where
 {
     #[inline]
     fn hash<H: Hasher>(&self, state: &mut H) {
-        Hash::hash(&self._place, state)
+        Hash::hash(&self._place as &P, state)
     }
 }
 
@@ -230,12 +245,12 @@ where
 {
     #[inline]
     fn eq(&self, other: &ClearOnDrop<Q>) -> bool {
-        PartialEq::eq(&self._place, &other._place)
+        PartialEq::eq(&self._place as &P, &other._place as &Q)
     }
 
     #[inline]
     fn ne(&self, other: &ClearOnDrop<Q>) -> bool {
-        PartialEq::ne(&self._place, &other._place)
+        PartialEq::ne(&self._place as &P, &other._place as &Q)
     }
 }
 
@@ -255,27 +270,27 @@ where
 {
     #[inline]
     fn partial_cmp(&self, other: &ClearOnDrop<Q>) -> Option<Ordering> {
-        PartialOrd::partial_cmp(&self._place, &other._place)
+        PartialOrd::partial_cmp(&self._place as &P, &other._place as &Q)
     }
 
     #[inline]
     fn lt(&self, other: &ClearOnDrop<Q>) -> bool {
-        PartialOrd::lt(&self._place, &other._place)
+        PartialOrd::lt(&self._place as &P, &other._place as &Q)
     }
 
     #[inline]
     fn le(&self, other: &ClearOnDrop<Q>) -> bool {
-        PartialOrd::le(&self._place, &other._place)
+        PartialOrd::le(&self._place as &P, &other._place as &Q)
     }
 
     #[inline]
     fn gt(&self, other: &ClearOnDrop<Q>) -> bool {
-        PartialOrd::gt(&self._place, &other._place)
+        PartialOrd::gt(&self._place as &P, &other._place as &Q)
     }
 
     #[inline]
     fn ge(&self, other: &ClearOnDrop<Q>) -> bool {
-        PartialOrd::ge(&self._place, &other._place)
+        PartialOrd::ge(&self._place as &P, &other._place as &Q)
     }
 }
 
@@ -286,7 +301,7 @@ where
 {
     #[inline]
     fn cmp(&self, other: &Self) -> Ordering {
-        Ord::cmp(&self._place, &other._place)
+        Ord::cmp(&self._place as &P, &other._place as &P)
     }
 }
 
@@ -320,6 +335,7 @@ mod tests {
         assert_eq!(clear.data, DATA);
     }
 
+    #[cfg(not(miri))]
     #[test]
     fn into_box() {
         let place: Box<Place> = Box::new(Default::default());
@@ -389,6 +405,7 @@ mod tests {
         assert_eq!(&clear[..], "test");
     }
 
+    #[cfg(not(miri))]
     #[test]
     fn into_string() {
         let place: String = "test".into();
